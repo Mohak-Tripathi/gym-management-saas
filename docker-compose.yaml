@@ -1,0 +1,126 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:15
+    container_name: postgres_container
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: gym_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    container_name: backend_container
+    ports:
+      - "4000:4000"
+    depends_on:
+      - db 
+    env_file:
+      - .env  # Load variables from .env file
+    environment:
+      - DATABASE_URL
+    # environment:
+    #   DATABASE_URL: "postgresql://postgres:password@db:5432/gym_db"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: sh -c "npx prisma generate && npx prisma migrate dev --name init && npm run build && npm run start"
+
+volumes:
+  postgres_data:
+
+
+
+
+
+
+# Great question! You're absolutely right to notice that the `DATABASE_URL` is defined **both** in:
+
+# - `docker-compose.yml`
+# - `.env`
+
+# Let me explain **why** and **how** to handle this properly 👇
+
+# ---
+
+# ### 🧠 Why `DATABASE_URL` is in both `.env` and `docker-compose.yml`?
+
+# 1. **In `.env`**:  
+#    This is used **locally by your app**, Prisma CLI, and tooling (like `npx prisma migrate dev`, etc.) when **you run the app outside Docker**, e.g., using `npm run dev`.
+
+# 2. **In `docker-compose.yml` → environment**:  
+#    This is passed **to the backend container at runtime**, ensuring **inside the container**, your Node.js app knows how to connect to the Docker-managed Postgres service (`db`).
+
+# ---
+
+# ### ✅ Best Practice: One Source of Truth
+
+# You should avoid **duplicating** config values. Instead, use your `.env` file for everything and tell `docker-compose` to **load environment variables from `.env`**.
+
+# ---
+
+# ### ✅ Solution: Use `.env` file inside `docker-compose.yml`
+
+# Update your `docker-compose.yml` like this:
+
+# ```yaml
+# version: "3.8"
+# services:
+#   db:
+#     image: postgres:15
+#     container_name: postgres_container
+#     restart: always
+#     environment:
+#       POSTGRES_USER: postgres
+#       POSTGRES_PASSWORD: password
+#       POSTGRES_DB: gym_db
+#     ports:
+#       - "5432:5432"
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+
+#   backend:
+#     build: .
+#     container_name: backend_container
+#     ports:
+#       - "4000:4000"
+#     depends_on:
+#       - db
+#     env_file:
+#       - .env  # Load variables from .env file
+#     volumes:
+#       - .:/app
+#       - /app/node_modules
+#     command: sh -c "npx prisma generate && npx prisma migrate dev --name init && npm run build && npm run start"
+
+# volumes:
+#   postgres_data:
+# ```
+
+# ---
+
+# ### 🧪 Sample `.env` file:
+
+# ```env
+# PORT=4000
+# DATABASE_URL=postgresql://postgres:password@db:5432/gym_db
+# ```
+
+# > ✅ `@db` works inside Docker network to reference the service name of the Postgres container (`db`).
+
+# ---
+
+# ### Summary
+
+# | Location         | Purpose                                    |
+# |------------------|---------------------------------------------|
+# | `.env`           | Used by local tooling & app configs         |
+# | `docker-compose` | Injects environment into container runtime  |
+# | `env_file:`      | Lets Docker use `.env` directly — DRY setup ✅ |
+
+# Let me know if you want me to generate the final cleaned-up versions of `.env`, `docker-compose.yml`, and `Dockerfile` all at once!
