@@ -17,9 +17,106 @@ datasource db {
 }
 
 
-model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+
+model Trainee {
+  id               String     @id @default(uuid())
+  fullName         String
+  email            String     @unique
+  phone            String
+  gender           Gender
+  age              Int
+  address          String
+  dateOfJoining    DateTime
+  membershipId     String
+  trainerId        String?
+  payments         Payment[]
+  workoutPlans     WorkoutPlan[]
+
+  membership       Membership @relation(fields: [membershipId], references: [id])
+  trainer          Trainer?   @relation(fields: [trainerId], references: [id])
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+}
+
+model Trainer {
+  id              String       @id @default(uuid())
+  fullName        String
+  specialization  String
+  experienceYears Int
+  phone           String
+  email           String       @unique
+  trainees        Trainee[]
+  workoutPlans    WorkoutPlan[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model Membership {
+  id           String     @id @default(uuid())
+  name         String
+  price        Decimal
+  duration     Int        // in months
+  benefits     String[]
+  trainees     Trainee[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Payment {
+  id             String     @id @default(uuid())
+  trainee        Trainee    @relation(fields: [traineeId], references: [id])
+  traineeId      String
+  amount         Decimal
+  paymentDate    DateTime
+  paymentMethod  PaymentMethod
+  transactionId  String?
+  status         PaymentStatus
+}
+
+model WorkoutPlan {
+  id          String   @id @default(uuid())
+  trainee     Trainee  @relation(fields: [traineeId], references: [id])
+  traineeId   String
+  trainer     Trainer  @relation(fields: [trainerId], references: [id])
+  trainerId   String
+  title       String
+  description String
+  date        DateTime
+  exercises   String[]
+  createdAt   DateTime @default(now())
+}
+
+model Admin {
+  id          String   @id @default(uuid())
+  username    String   @unique
+  email       String   @unique
+  password    String
+  role        AdminRole
+  createdAt   DateTime @default(now())
+}
+
+
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  UPI
+}
+
+enum PaymentStatus {
+  SUCCESS
+  PENDING
+  FAILED
+}
+
+enum AdminRole {
+  OWNER
+  MANAGER
 }
 
