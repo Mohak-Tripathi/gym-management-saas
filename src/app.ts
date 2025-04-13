@@ -1,6 +1,11 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import customerRoutes from './routes/customer.route';
+import traineeRoutes from './routes/trainee.routes';
+import membershipRoutes from "./routes/membership.route";
+
+
+
 
 dotenv.config();
 
@@ -9,8 +14,14 @@ const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
 
+
+
+
+
 // Mount customer routes
 app.use('/api/customers', customerRoutes);
+app.use('/api/trainees', traineeRoutes);
+app.use("/api/memberships", membershipRoutes);
 
 // Start the server
 app.listen(PORT, () => {
