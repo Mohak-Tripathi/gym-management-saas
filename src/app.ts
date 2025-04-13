@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import customerRoutes from './routes/customer.route';
 import traineeRoutes from './routes/trainee.routes';
-import membershipRoutes from "./routes/membership.route";
+import membershipRoutes from "./routes/memebership.routes";
 import trainerRoutes from "./routes/trainer.routes";
 
 
