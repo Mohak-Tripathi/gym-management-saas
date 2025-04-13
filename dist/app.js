@@ -8,10 +8,13 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const customer_route_1 = __importDefault(require("./routes/customer.route"));
 const trainee_routes_1 = __importDefault(require("./routes/trainee.routes"));
 const membership_route_1 = __importDefault(require("./routes/membership.route"));
+const trainer_routes_1 = __importDefault(require("./routes/trainer.routes"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 5000;
 app.use(express_1.default.json());
+// Example
+app.use("/api/trainers", trainer_routes_1.default);
 // Mount customer routes
 app.use('/api/customers', customer_route_1.default);
 app.use('/api/trainees', trainee_routes_1.default);

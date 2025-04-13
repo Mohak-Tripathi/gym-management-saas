@@ -1,23 +1,23 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TraineeService = void 0;
-// src/services/trainee.service.ts
-const trainee_db_1 = require("../database/trainee.db");
+// ✅ Service Layer - src/services/trainee.service.ts
+const trainee_database_1 = require("../database/trainee.database");
 class TraineeService {
     static async createTrainee(data) {
-        return trainee_db_1.traineeDB.create(data);
+        return trainee_database_1.TraineeDatabase.create(data);
     }
     static async getAllTrainees() {
-        return trainee_db_1.traineeDB.getAll();
+        return trainee_database_1.TraineeDatabase.getAll();
     }
     static async getTraineeById(id) {
-        return trainee_db_1.traineeDB.getById(id);
+        return trainee_database_1.TraineeDatabase.getById(id);
     }
     static async updateTrainee(id, data) {
-        return trainee_db_1.traineeDB.update(id, data);
+        return trainee_database_1.TraineeDatabase.update(id, data);
     }
     static async deleteTrainee(id) {
-        return trainee_db_1.traineeDB.delete(id);
+        return trainee_database_1.TraineeDatabase.delete(id);
     }
 }
 exports.TraineeService = TraineeService;
