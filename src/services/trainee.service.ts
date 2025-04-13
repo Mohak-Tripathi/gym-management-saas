@@ -1,24 +1,24 @@
-// src/services/trainee.service.ts
-import { traineeDB } from '../database/trainee.db';
+// ✅ Service Layer - src/services/trainee.service.ts
+import { TraineeDatabase } from "../database/trainee.database";
 
 export class TraineeService {
   static async createTrainee(data: any) {
-    return traineeDB.create(data);
+    return TraineeDatabase.create(data);
   }
 
   static async getAllTrainees() {
-    return traineeDB.getAll();
+    return TraineeDatabase.getAll();
   }
 
   static async getTraineeById(id: string) {
-    return traineeDB.getById(id);
+    return TraineeDatabase.getById(id);
   }
 
   static async updateTrainee(id: string, data: any) {
-    return traineeDB.update(id, data);
+    return TraineeDatabase.update(id, data);
   }
 
   static async deleteTrainee(id: string) {
-    return traineeDB.delete(id);
+    return TraineeDatabase.delete(id);
   }
 }

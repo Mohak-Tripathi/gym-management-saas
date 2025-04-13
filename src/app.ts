@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import customerRoutes from './routes/customer.route';
 import traineeRoutes from './routes/trainee.routes';
 import membershipRoutes from "./routes/membership.route";
-
+import trainerRoutes from "./routes/trainer.routes";
 
 
 
@@ -15,6 +15,9 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 
 
+
+// Example
+app.use("/api/trainers", trainerRoutes);
 
 
 
