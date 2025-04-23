@@ -1,0 +1,93 @@
+import { CommunityPostDatabase } from "../database/communityPost.database";
+import { AppError } from "../utils/AppError";
+
+export class CommunityPostService {
+  static async create(data: any) {
+    try {
+      return await CommunityPostDatabase.create(data);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError(
+        "Error creating community post",
+        500,
+        "COMMUNITY_POST_SERVICE_CREATE_ERROR"
+      );
+    }
+  }
+
+  static async getAll() {
+    try {
+      return await CommunityPostDatabase.getAll();
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError(
+        "Error fetching community posts",
+        500,
+        "COMMUNITY_POST_SERVICE_FETCH_ALL_ERROR"
+      );
+    }
+  }
+
+  static async getById(id: string) {
+    try {
+      const post = await CommunityPostDatabase.getById(id);
+      if (!post) {
+        throw new AppError(
+          "Community post not found",
+          404,
+          "COMMUNITY_POST_NOT_FOUND"
+        );
+      }
+      return post;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError(
+        `Error fetching post with ID: ${id}`,
+        500,
+        "COMMUNITY_POST_SERVICE_FETCH_BY_ID_ERROR"
+      );
+    }
+  }
+
+  static async update(id: string, data: any) {
+    try {
+      const post = await CommunityPostDatabase.getById(id);
+      if (!post) {
+        throw new AppError(
+          "Community post not found",
+          404,
+          "COMMUNITY_POST_NOT_FOUND"
+        );
+      }
+      return await CommunityPostDatabase.update(id, data);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError(
+        `Error updating post with ID: ${id}`,
+        500,
+        "COMMUNITY_POST_SERVICE_UPDATE_ERROR"
+      );
+    }
+  }
+
+  static async delete(id: string) {
+    try {
+      const post = await CommunityPostDatabase.getById(id);
+      if (!post) {
+        throw new AppError(
+          "Community post not found",
+          404,
+          "COMMUNITY_POST_NOT_FOUND"
+        );
+      }
+      return await CommunityPostDatabase.delete(id);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError(
+        `Error deleting post with ID: ${id}`,
+        500,
+        "COMMUNITY_POST_SERVICE_DELETE_ERROR"
+      );
+    }
+  }
+}

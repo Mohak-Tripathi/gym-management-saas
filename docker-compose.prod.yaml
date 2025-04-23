@@ -1,11 +1,61 @@
-version: "3.9"
+# version: "3.9"
+
+# services:
+#   backend:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     container_name: backend_prod
+#     ports:
+#       - "4000:4000"
+#     depends_on:
+#       - db
+#     env_file:
+#       - .env
+#     environment:
+#       - NODE_ENV=production
+#     command: npm run start
+#     restart: always
+
+#   db:
+#     image: postgres:15
+#     container_name: postgres_prod
+#     environment:
+#       POSTGRES_DB: gym_db
+#       POSTGRES_USER: postgres
+#       POSTGRES_PASSWORD: password
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#     ports:
+#       - "5432:5432"
+
+# volumes:
+#   postgres_data:
+
+
+# #Command to run the production environment
+# # docker-compose -f docker-compose.prod.yaml up --build -d
+
+
+version: "3.8"
 
 services:
+  db:
+    image: postgres:15
+    container_name: postgres_container_prod
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: gym_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: backend_prod
+    build: .
+    container_name: backend_container_prod
     ports:
       - "4000:4000"
     depends_on:
@@ -13,25 +63,13 @@ services:
     env_file:
       - .env
     environment:
-      - NODE_ENV=production
-    command: npm run start
+      - DATABASE_URL
     restart: always
-
-  db:
-    image: postgres:15
-    container_name: postgres_prod
-    environment:
-      POSTGRES_DB: gym_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+      - .:/app
+      - /app/node_modules
+    command: sh -c "npm run build && npm run start"
 
 volumes:
-  postgres_data:
+  postgres_data_prod:
 
-
-#Command to run the production environment
-# docker-compose -f docker-compose.prod.yaml up --build -d

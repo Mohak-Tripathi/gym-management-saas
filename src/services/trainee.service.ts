@@ -1,20 +1,58 @@
 // ✅ Service Layer - src/services/trainee.service.ts
 import { TraineeDatabase } from "../database/trainee.database";
+import { TraineeMembershipDatabase } from "../database/traineemembership.database";
 import { AppError } from "../utils/AppError";
 
 export class TraineeService {
-  static async createTrainee(data: any) {
+  //   static async createTrainee(data: any) {
+  //     try {
+  //       const trainee = await TraineeDatabase.create(data);
+  //       return trainee;
+  //     } catch (error) {
+  //       if (error instanceof AppError) {
+  //         throw error;
+  //       }
+  //       throw new AppError(
+  //         "Error creating trainee",
+  //         500,
+  //         "TRAINEE_SERVICE_CREATE_ERROR"
+  //       );
+  //     }
+  //   }
+
+  //createTrainee got extended
+
+  //Wrap this is Transactions later TODO - Use Prisma Transactions.
+
+  static async onboardTraineeWithMembership(data: any) {
+    const {
+      traineeData,
+      traineeMembershipData, // contains membershipId, price, dates, etc.
+    } = data;
+
     try {
-      const trainee = await TraineeDatabase.create(data);
-      return trainee;
+      const trainee = await TraineeDatabase.create(traineeData);
+
+      // Add traineeId to membership data
+      const fullMembershipData = {
+        ...traineeMembershipData,
+        traineeId: trainee.id,
+      };
+
+      const membership = await TraineeMembershipDatabase.create(
+        fullMembershipData
+      );
+
+      return {
+        trainee,
+        traineeMembership: membership,
+      };
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      console.error("Onboarding Error:", error);
       throw new AppError(
-        "Error creating trainee",
+        "Error onboarding trainee with membership",
         500,
-        "TRAINEE_SERVICE_CREATE_ERROR"
+        "TRAINEE_ONBOARDING_ERROR"
       );
     }
   }

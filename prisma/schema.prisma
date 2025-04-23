@@ -18,72 +18,211 @@ datasource db {
 
 
 
+
+
+
 model Trainee {
   id               String     @id @default(uuid())
   fullName         String
   email            String     @unique
   phone            String
+  referenceMobileNo    String?    // Emergency or referral contact
   gender           Gender
+  image                String?    // Profile picture URL
   age              Int
   address          String
-  dateOfJoining    DateTime
-  membershipId     String
+  status           TraineeStatus @default(ACTIVE) // NEW ENUM: ACTIVE, INACTIVE
+  personalizedGoal     String[]    // e.g., "Fat Loss", "Muscle Gain", "Posture Correction"
+  healthIssues         String[]   // e.g., ["Back Pain", "Knee Injury"]
+
   trainerId        String?
   payments         Payment[]
   workoutPlans     WorkoutPlan[]
 
-  membership       Membership @relation(fields: [membershipId], references: [id])
+  traineeMemberships TraineeMembership[] // One-to-many
+
+  //userId String
+  //user   User @relation(fields: [userId], references: [id])
+  userId    String   @unique
+  user      User     @relation("UserTrainee", fields: [userId], references: [id])
+
+  /// 💥 NEW FIELDS
+  gymBranchId        String
+  gymBranch          GymBranch        @relation(fields: [gymBranchId], references: [id])
+
   trainer          Trainer?   @relation(fields: [trainerId], references: [id])
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 }
 
-model Trainer {
-  id              String       @id @default(uuid())
-  fullName        String
-  specialization  String
-  experienceYears Int
-  phone           String
-  email           String       @unique
-  trainees        Trainee[]
-  workoutPlans    WorkoutPlan[]
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+enum TraineeStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
 }
+
+
+model Gym {
+  id        String       @id @default(uuid())
+  name      String
+  //location  String
+  branches  GymBranch[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+
+
+model GymBranch {
+  id        String     @id @default(uuid())
+  name      String
+  address   String
+  gymId     String
+  gym       Gym        @relation(fields: [gymId], references: [id])
+  isMainBranch Boolean     @default(false) // Mark one as the HQ
+  trainees  Trainee[]
+  trainers  Trainer[]
+  users     User[] // Admins, Receptionists, etc.
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+
+model User {
+  id         String     @id @default(uuid())
+  email      String     @unique
+  password   String
+  fullName   String
+  role       UserRole
+  phone      String?
+  gymBranch  GymBranch? @relation(fields: [gymBranchId], references: [id])
+  gymBranchId String?
+
+   // Optional reverse relation
+  //trainee   Trainee?
+  //trainer   Trainer?
+
+  trainee  Trainee?  @relation("UserTrainee") // Optional: only present if user is a trainee
+  trainer  Trainer?  @relation("UserTrainer") // Optional: only present if user is a traine
+
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+enum UserRole {
+  SUPERADMIN
+  ADMIN
+  RECEPTIONIST
+}
+
+
+
+
+model Trainer {
+  id               String       @id @default(uuid())
+  fullName         String
+  referenceMobileNo String?
+  gender           Gender     @default(MALE)
+  specialization   String[]
+  workType        WorkType    @default(FULL_TIME)
+  joiningDate      DateTime?
+  lastLoggedIn     DateTime?
+  status           TrainerStatus @default(ACTIVE)
+  experienceYears  Int
+  phone            String
+  email            String       @unique
+  certifications  Certification[] // Relation to certifications
+  trainees         Trainee[]
+  workoutPlans     WorkoutPlan[]
+  trainerSalaries  TrainerSalary[]
+  /// 💥 NEW FIELDS
+  gymBranchId        String
+  gymBranch          GymBranch        @relation(fields: [gymBranchId], references: [id])
+
+  //userId String
+  //user   User @relation(fields: [userId], references: [id])
+  userId    String   @unique
+  user      User     @relation("UserTrainer", fields: [userId], references: [id])
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+model Certification {
+  id          String   @id @default(uuid())
+  title       String   // e.g., "Certified Personal Trainer"
+  institute   String?   // e.g., "ACE", "NSCA"
+  issueDate   DateTime
+  expiryDate  DateTime?
+  documentUrl String   // Link to uploaded proof/document (PDF/image)
+  trainer     Trainer  @relation(fields: [trainerId], references: [id])
+  trainerId   String
+}
+
+
+
 
 model Membership {
   id           String     @id @default(uuid())
   name         String
-  price        Decimal
-  duration     Int        // in months
-  benefits     String[]
-  trainees     Trainee[]
+  actualPrice  Decimal      @default(0)   // Original price
+  baseDuration Int          @default(0) // Base duration in months
+  benefits     String[]   // Generic benefits
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+  traineeMemberships TraineeMembership[] // One-to-many
 }
+
+model TraineeMembership {
+  id                  String    @id @default(uuid())
+  trainee             Trainee   @relation(fields: [traineeId], references: [id])
+  traineeId           String
+  membership          Membership @relation(fields: [membershipId], references: [id])
+  membershipId        String
+
+  discountedPrice     Decimal    // What the customer actually paid
+  discountPercentage  Int?
+  reasonOfDiscount    String?
+  //payments  Payment[]
+
+  extraMonths         Int?       // Extra duration due to offer
+  startDate           DateTime
+  endDate             DateTime
+
+  createdAt           DateTime   @default(now())
+}
+
+
+
+
 
 model Payment {
   id             String     @id @default(uuid())
   trainee        Trainee    @relation(fields: [traineeId], references: [id])
   traineeId      String
+  //traineeMembership    TraineeMembership?   @relation(fields: [traineeMembershipId], references: [id])
+  //traineeMembershipId  String?              // Optional: to link payment to a specific membership record
   amount         Decimal
   paymentDate    DateTime
   paymentMethod  PaymentMethod
   transactionId  String?
   status         PaymentStatus
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model WorkoutPlan {
   id          String   @id @default(uuid())
   trainee     Trainee  @relation(fields: [traineeId], references: [id])
   traineeId   String
-  trainer     Trainer  @relation(fields: [trainerId], references: [id])
-  trainerId   String
+  trainer     Trainer?  @relation(fields: [trainerId], references: [id])
+  trainerId   String?
   title       String
   description String
   date        DateTime
   exercises   String[]
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Admin {
@@ -92,8 +231,61 @@ model Admin {
   email       String   @unique
   password    String
   role        AdminRole
+  posts  CommunityPost[]
+  notifications  Notification[]
   createdAt   DateTime @default(now())
 }
+
+
+model TrainerSalary {
+  id              String        @id @default(uuid())
+  trainer         Trainer       @relation(fields: [trainerId], references: [id])
+  trainerId       String
+  amount          Decimal       // Amount paid
+  paymentType     SalaryType    // MONTHLY, ONE_TIME, CONTRACT
+  periodStart     DateTime?     // For monthly/contract payments
+  periodEnd       DateTime?     // For monthly/contract payments
+  paymentDate     DateTime      // Date when salary was paid
+  paymentMethod   PaymentMethod // Enum: CASH, UPI, BANK_TRANSFER
+  status          SalaryStatus  // PAID, PENDING, FAILED
+  remarks         String?       // Notes like "March Salary", "Bonus", etc.
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+
+enum SalaryType {
+  MONTHLY
+  ONE_TIME
+  CONTRACT
+}
+
+enum SalaryStatus {
+  PAID
+  PENDING
+  FAILED
+}
+
+
+
+enum AdminRole {
+  OWNER
+  MANAGER
+}
+
+
+enum WorkType {
+  FULL_TIME
+  PART_TIME
+  FREELANCER
+  OTHER
+}
+
+enum TrainerStatus {
+  ACTIVE
+  INACTIVE
+}
+
 
 
 
@@ -103,10 +295,13 @@ enum Gender {
   OTHER
 }
 
+
+
 enum PaymentMethod {
   CASH
   CARD
   UPI
+  BANK_TRANSFER
 }
 
 enum PaymentStatus {
@@ -115,8 +310,80 @@ enum PaymentStatus {
   FAILED
 }
 
-enum AdminRole {
-  OWNER
-  MANAGER
+
+
+model CommunityPost {
+  id          String     @id @default(uuid())
+  title       String
+  content     String      // Rich text or plain text
+  imageUrls   String[]    // Optional images (e.g., before/after transformation, announcement banner)
+  category    PostCategory
+  postedBy    Admin       @relation(fields: [adminId], references: [id])
+  adminId     String
+  isPinned    Boolean     @default(false) // For important or sticky posts
+  visibleTo   UserGroup[] // Enum: who should see this post (optional)
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
+enum PostCategory {
+  ANNOUNCEMENT
+  TRANSFORMATION
+  EVENT
+  TRAINER_UPDATE
+  GENERAL
+  FITNESS_TIP
+  CHALLENGE
+  GYM_TIMING_CHANGE
+}
+
+enum UserGroup {
+  ALL
+  TRAINEE
+  TRAINER
+}
+
+
+
+model Notification {
+  id           String       @id @default(uuid())
+  title        String
+  message      String
+  type         NotificationType
+  relatedId    String?       // Optional: ID of related resource (e.g., traineeId, paymentId, postId)
+  relatedType  RelatedEntity? // Optional: What type of entity this is about (e.g., TRAINEE, PAYMENT)
+  isRead       Boolean       @default(false)
+  recipientId  String?       // Optional: In case you want to send specific notifications later (e.g., to one trainer)
+  recipient    Admin?        @relation(fields: [recipientId], references: [id]) // Owner/admin who receives it
+
+  createdAt    DateTime      @default(now())
+}
+
+
+
+enum NotificationType {
+  NEW_MEMBER
+  PAYMENT_RECEIVED
+  COMMUNITY_POST
+  MEMBERSHIP_EXPIRING
+  TRAINER_ASSIGNED
+  NEW_TRAINER
+  TRAINEE_PROGRESS
+  MEMBERSHIP_RENEWAL
+  CUSTOM
+}
+
+enum RelatedEntity {
+  TRAINEE
+  TRAINER
+  PAYMENT
+  COMMUNITY_POST
+  MEMBERSHIP
+}
+
+
+//TODO FOR Community feed (second phase)
+//Comments or likes (for engagement)?
+//Scheduling (future post date)?
+//Push notification toggles when a post is made?
