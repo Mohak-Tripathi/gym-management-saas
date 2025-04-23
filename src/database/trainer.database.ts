@@ -8,6 +8,7 @@ export class TrainerDB {
     try {
       return await prisma.trainer.create({ data });
     } catch (error) {
+      console.error("🔥 Trainer Create Error:", error); 
       throw new AppError(
         "Error creating trainer",
         500,
@@ -18,7 +19,15 @@ export class TrainerDB {
 
   static async getAll() {
     try {
-      return await prisma.trainer.findMany();
+      // return await prisma.trainer.findMany();
+      return await prisma.trainer.findMany({
+        include: {
+          certifications: true,
+          trainees: true,
+          workoutPlans: true,
+          trainerSalaries: true
+        }
+      });
     } catch (error) {
       throw new AppError(
         "Error fetching trainers",
@@ -30,7 +39,17 @@ export class TrainerDB {
 
   static async getById(id: string) {
     try {
-      return await prisma.trainer.findUnique({ where: { id } });
+      // return await prisma.trainer.findUnique({ where: { id } });
+
+      return await prisma.trainer.findUnique({
+        where: { id },
+        include: {
+          certifications: true,
+          trainees: true,
+          workoutPlans: true,
+          trainerSalaries: true,
+        },
+      });
     } catch (error) {
       throw new AppError(
         `Error fetching trainer with ID: ${id}`,

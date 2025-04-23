@@ -4,13 +4,16 @@
 #make migrate name=added-various-table-in-a-go
 
 # Run migration with a dynamic name inside the backend Docker container
+
 migrate:
-	@if [ -z "$(name)" ]; then \
+	@if [ "$(name)" = "" ]; then \
 		echo "❌ Please provide a migration name using: make migrate name=your_migration_name"; \
 		exit 1; \
-	fi; \
-	echo "🚀 Running Prisma migration with name: $(name)"; \
-	docker-compose exec backend sh -c "npx prisma generate && npx prisma migrate dev --name $(name)"
+	else \
+		echo "🚀 Running Prisma migration with name: $(name)"; \
+		docker-compose exec backend sh -c "npx prisma generate && npx prisma migrate dev --name $(name)"; \
+	fi
+
 
 #Example to generate the prisma client and be in sync with db. 
 generate:
@@ -19,5 +22,13 @@ generate:
 # Run Prisma Studio inside the backend Docker container
 studio:
 	docker-compose exec backend sh -c "npx prisma studio"
+
+
+# Push schema to DB (optional: use for quick syncing in dev if skipping migrations)
+dbpush:
+	docker-compose exec backend sh -c "npx prisma db push"
+
+dev:
+	docker-compose up --build
 
 

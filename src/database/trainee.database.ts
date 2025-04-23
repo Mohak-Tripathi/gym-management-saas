@@ -8,6 +8,7 @@ export class TraineeDatabase {
     try {
       return await prisma.trainee.create({ data });
     } catch (error) {
+      console.log(error, "error-trainee")
       throw new AppError(
         "Error creating trainee",
         500,
@@ -20,7 +21,7 @@ export class TraineeDatabase {
     try {
       return await prisma.trainee.findMany({
         include: {
-          membership: true,
+          // membership: true,
           trainer: true,
         },
       });
@@ -33,12 +34,13 @@ export class TraineeDatabase {
     }
   }
 
+
   static async getById(id: string) {
     try {
       return await prisma.trainee.findUnique({
         where: { id },
         include: {
-          membership: true,
+          // membership: true,
           trainer: true,
         },
       });

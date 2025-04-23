@@ -4,17 +4,29 @@ import { TraineeService } from "../services/trainee.service";
 import { handleErrorResponse } from "../utils/handleErrorResponse"
 
 export class TraineeController {
-  static async create(req: Request, res: Response) {
+  // static async create(req: Request, res: Response) {
+  //   try {
+  //     const trainee = await TraineeService.createTrainee(req.body);
+  //     res.status(201).json({
+  //       status: "success",
+  //       data: trainee
+  //     });
+  //   } catch (err) {
+  //     handleErrorResponse(res, err);
+  //   }
+  // }
+
+
+  static async onboard(req: Request, res: Response) {
     try {
-      const trainee = await TraineeService.createTrainee(req.body);
-      res.status(201).json({
-        status: "success",
-        data: trainee
-      });
+      const data = req.body; // contains both traineeData and traineeMembershipData
+      const result = await TraineeService.onboardTraineeWithMembership(data);
+      res.status(201).json(result);
     } catch (err) {
       handleErrorResponse(res, err);
     }
   }
+
 
   static async getAll(req: Request, res: Response) {
     try {

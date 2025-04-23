@@ -43,7 +43,7 @@ import { MembershipService } from "../services/membership.service";
 import { handleErrorResponse } from "../utils/handleErrorResponse";
 
 export class MembershipController {
-  static create: RequestHandler = async (req, res) => {
+  static create: RequestHandler = async (req: Request, res: Response) => {
     try {
       const data = req.body;
       const membership = await MembershipService.createMembership(data);
@@ -53,7 +53,7 @@ export class MembershipController {
     }
   }
 
-  static getAll: RequestHandler = async (req, res) => {
+  static getAll: RequestHandler = async (req: Request, res: Response) => {
     try {
       const memberships = await MembershipService.getAllMemberships();
       res.json(memberships);
@@ -62,7 +62,7 @@ export class MembershipController {
     }
   }
 
-  static getById: RequestHandler = async (req, res) => {
+  static getById: RequestHandler = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const membership = await MembershipService.getMembershipById(id);
@@ -81,7 +81,7 @@ export class MembershipController {
     }
   }
 
-  static update: RequestHandler = async (req, res) => {
+  static update: RequestHandler = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
@@ -92,7 +92,7 @@ export class MembershipController {
     }
   }
 
-  static delete: RequestHandler = async (req, res) => {
+  static delete: RequestHandler = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       await MembershipService.deleteMembership(id);
