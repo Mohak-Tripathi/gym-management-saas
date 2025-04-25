@@ -7,6 +7,9 @@ import trainerRoutes from "./routes/trainer.routes";
 import traineemembershipRoutes from "./routes/traineemembership.routes"
 import communityPostRoutes from "./routes/communityPost.route"
 import gymRoutes from "./routes/gym.routes"
+import gymBranchRoutes from "./routes/gymBranch.routes"
+import userRoutes from "./routes/user.routes"
+import passwordRoute from "./routes/passwordReset.routes"
 
 
 dotenv.config();
@@ -30,6 +33,9 @@ app.use("/api/memberships", membershipRoutes);
 app.use("/api/trainee-memberships", traineemembershipRoutes);
 app.use("/api/community-post", communityPostRoutes);
 app.use("/api/gym", gymRoutes)
+app.use("/api/gym-branch", gymBranchRoutes)
+app.use("/api/auth", userRoutes)
+app.use("/api/password", passwordRoute)
 
 // Start the server
 app.listen(PORT, () => {
