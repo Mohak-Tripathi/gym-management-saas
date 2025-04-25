@@ -91,7 +91,7 @@ model GymBranch {
 model User {
   id         String     @id @default(uuid())
   email      String     @unique
-  password   String
+  password   String?
   fullName   String
   role       UserRole
   phone      String?
@@ -101,6 +101,7 @@ model User {
    // Optional reverse relation
   //trainee   Trainee?
   //trainer   Trainer?
+  passwordSetupTokens PasswordSetupToken[]
 
   trainee  Trainee?  @relation("UserTrainee") // Optional: only present if user is a trainee
   trainer  Trainer?  @relation("UserTrainer") // Optional: only present if user is a traine
@@ -381,6 +382,19 @@ enum RelatedEntity {
   COMMUNITY_POST
   MEMBERSHIP
 }
+
+
+
+model PasswordSetupToken {
+  id          String   @id @default(uuid())
+  token       String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  expiresAt   DateTime
+  used        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
 
 
 //TODO FOR Community feed (second phase)

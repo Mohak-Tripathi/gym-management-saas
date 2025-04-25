@@ -5,7 +5,7 @@ import { handleErrorResponse } from "../utils/handleErrorResponse";
 export const TrainerController = {
   async create(req: Request, res: Response) {
     try {
-      const trainer = await TrainerService.createTrainer(req.body);
+      const trainer = await TrainerService.onBoardTrainer(req.body);
       res.status(201).json({
         status: "success",
         data: trainer
