@@ -1,5 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../utils/AppError';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+
 
 const prisma = new PrismaClient();
 
@@ -28,6 +31,98 @@ export class UserDatabase {
       );
     }
   }
+
+
+  
+  // static async loginCurrentUser(data:any) {
+  //   const { email, password } = data;
+
+  //   const user =  await prisma.user.findUnique({
+  //     where: { email }
+  //   });
+  
+  //   if (!user) {
+  //     throw new AppError(
+  //       "user not found",
+  //       404,
+  //       "USER_DB_NOT_FOUND_ERROR"
+  //     );
+  //   }
+  
+  //   const isValid = await bcrypt.compare(password, user.password);
+  
+  //   if (!isValid) {
+  //     throw new AppError(
+  //       "invalid credentials",
+  //       403,
+  //       "USER_DB_CREDENTIALS_FOUND_WRONG"
+  //     );
+  //   }
+  
+  //   const payload = {
+  //     userId: user.id,
+  //     role: user.role,
+  //     gymId: user.gymId,
+  //     gymBranchId: user.gymBranchId ?? null,
+  //   };
+  
+  //   const token = jwt.sign(payload, process.env.JWT_SECRET as string, {
+  //     expiresIn: '7d',
+  //   });
+  
+  //   return ({
+  //     token,
+  //     user: payload,
+  //   });
+  // }
+
+
+  static async loginCurrentUser(data: any) {
+    const { email, password } = data;
+  
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        gym: true,        // optional (if you want to use gym details later)
+        gymBranch: true,  // optional (if you want branch details later)
+      }
+    });
+  
+    if (!user) {
+      throw new AppError(
+        "User not found",
+        404,
+        "USER_DB_NOT_FOUND_ERROR"
+      );
+    }
+  
+    const isValid = await bcrypt.compare(password, user.password);
+  
+    if (!isValid) {
+      throw new AppError(
+        "Invalid credentials",
+        403,
+        "USER_DB_CREDENTIALS_INVALID_ERROR"
+      );
+    }
+  
+    const payload = {
+      userId: user.id,
+      role: user.role,
+      gymId: user.gymId,
+      gymBranchId: user.gymBranchId ?? null,
+    };
+  
+    const token = jwt.sign(payload, process.env.JWT_SECRET as string, {
+      expiresIn: '7d',
+    });
+  
+    return {
+      token,
+      user: payload,
+    };
+  }
+  
 
   static async getById(id: string) {
     try {

@@ -35,24 +35,29 @@ model Trainee {
   personalizedGoal     String[]    // e.g., "Fat Loss", "Muscle Gain", "Posture Correction"
   healthIssues         String[]   // e.g., ["Back Pain", "Knee Injury"]
 
-  trainerId        String?
   payments         Payment[]
   workoutPlans     WorkoutPlan[]
 
   traineeMemberships TraineeMembership[] // One-to-many
+  trainerId        String?
 
-  //userId String
-  //user   User @relation(fields: [userId], references: [id])
-  userId    String   @unique
-  user      User     @relation("UserTrainee", fields: [userId], references: [id])
+  // Tenant scoping (primary)
+  gymId           String
+  gym             Gym      @relation(fields: [gymId], references: [id])
+  
+  // Branch scoping (secondary)
+  gymBranchId     String
+  gymBranch       GymBranch @relation(fields: [gymBranchId], references: [id])
 
-  /// 💥 NEW FIELDS
-  gymBranchId        String
-  gymBranch          GymBranch        @relation(fields: [gymBranchId], references: [id])
 
-  trainer          Trainer?   @relation(fields: [trainerId], references: [id])
+  user      User    @relation("UserTrainee", fields: [userId], references: [id])
+  userId    String  @unique
+   trainer          Trainer?   @relation(fields: [trainerId], references: [id])
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
+
+  @@index([gymId])
+  @@index([gymBranchId])
 }
 
 enum TraineeStatus {
@@ -63,28 +68,57 @@ enum TraineeStatus {
 
 
 model Gym {
-  id        String       @id @default(uuid())
-  name      String
-  //location  String
-  branches  GymBranch[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id              String       @id @default(uuid())
+  name            String
+  branches        GymBranch[]
+  // Tenant relations
+  users           User[]
+  trainers        Trainer[]
+  trainees        Trainee[]
+  memberships     Membership[]
+  payments        Payment[]
+  workoutPlans    WorkoutPlan[]
+  communityPosts  CommunityPost[]
+  notifications   Notification[]
+  trainerSalaries TrainerSalary[]
+  traineeMemberships TraineeMembership[] 
+
+  passwordSetupTokens PasswordSetupToken[]
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 }
 
 
 
 model GymBranch {
-  id        String     @id @default(uuid())
-  name      String
-  address   String
-  gymId     String
-  gym       Gym        @relation(fields: [gymId], references: [id])
-  isMainBranch Boolean     @default(false) // Mark one as the HQ
-  trainees  Trainee[]
-  trainers  Trainer[]
-  users     User[] // Admins, Receptionists, etc.
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id           String     @id @default(uuid())
+  name         String
+  address      String
+  isMainBranch Boolean    @default(false)
+  
+  // Tenant relation
+  gymId        String
+  gym          Gym        @relation(fields: [gymId], references: [id])
+  
+  // Branch relations
+  trainees     Trainee[]
+  trainers     Trainer[]
+  traineeMemberships TraineeMembership[] // Inverse relation
+  users        User[]
+
+  notifications Notification[]
+  payments      Payment[]
+  workoutPlans  WorkoutPlan[]
+  trainerSalaries TrainerSalary[]
+  communityPosts CommunityPost[]
+  passwordSetupTokens PasswordSetupToken[]
+  memberships Membership[] 
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([gymId])
 }
 
 
@@ -95,19 +129,26 @@ model User {
   fullName   String
   role       UserRole
   phone      String?
-  gymBranch  GymBranch? @relation(fields: [gymBranchId], references: [id])
+  
+  // Tenant scoping (primary)
+  gymId      String
+  gym        Gym       @relation(fields: [gymId], references: [id])
+  
+  // Branch scoping (secondary)
   gymBranchId String?
+  gymBranch   GymBranch? @relation(fields: [gymBranchId], references: [id])
 
-   // Optional reverse relation
-  //trainee   Trainee?
-  //trainer   Trainer?
   passwordSetupTokens PasswordSetupToken[]
+  trainee     Trainee?  @relation("UserTrainee")
+  trainer     Trainer?  @relation("UserTrainer")
+  notifications  Notification[]  
 
-  trainee  Trainee?  @relation("UserTrainee") // Optional: only present if user is a trainee
-  trainer  Trainer?  @relation("UserTrainer") // Optional: only present if user is a traine
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+   communityPosts    CommunityPost[]  // 👈 Relation back to CommunityPost
 
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  @@index([gymId])
+  @@index([gymBranchId])
 }
 
 enum UserRole {
@@ -125,28 +166,34 @@ model Trainer {
   referenceMobileNo String?
   gender           Gender     @default(MALE)
   specialization   String[]
-  workType        WorkType    @default(FULL_TIME)
+  workType         WorkType    @default(FULL_TIME)
   joiningDate      DateTime?
   lastLoggedIn     DateTime?
   status           TrainerStatus @default(ACTIVE)
   experienceYears  Int
   phone            String
   email            String       @unique
-  certifications  Certification[] // Relation to certifications
+  certifications   Certification[]
   trainees         Trainee[]
   workoutPlans     WorkoutPlan[]
   trainerSalaries  TrainerSalary[]
-  /// 💥 NEW FIELDS
-  gymBranchId        String
-  gymBranch          GymBranch        @relation(fields: [gymBranchId], references: [id])
 
-  //userId String
-  //user   User @relation(fields: [userId], references: [id])
-  userId    String   @unique
-  user      User     @relation("UserTrainer", fields: [userId], references: [id])
+  // Tenant scoping (primary)
+  gymId           String
+  gym             Gym      @relation(fields: [gymId], references: [id])
+  
+  // Branch scoping (secondary)
+  gymBranchId     String
+  gymBranch       GymBranch @relation(fields: [gymBranchId], references: [id])
 
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  userId          String   @unique
+  user            User     @relation("UserTrainer", fields: [userId], references: [id])
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([gymId])
+  @@index([gymBranchId])
 }
 
 model Certification {
@@ -158,8 +205,9 @@ model Certification {
   documentUrl String   // Link to uploaded proof/document (PDF/image)
   trainer     Trainer  @relation(fields: [trainerId], references: [id])
   trainerId   String
-}
 
+ 
+}
 
 
 
@@ -169,9 +217,17 @@ model Membership {
   actualPrice  Decimal      @default(0)   // Original price
   baseDuration Int          @default(0) // Base duration in months
   benefits     String[]   // Generic benefits
+  // Tenant scoping
+  gymId        String
+  gym          Gym        @relation(fields: [gymId], references: [id])
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   traineeMemberships TraineeMembership[] // One-to-many
+
+  
+  // Branch scoping (secondary)
+  gymBranchId     String
+  gymBranch       GymBranch @relation(fields: [gymBranchId], references: [id])
 }
 
 model TraineeMembership {
@@ -191,6 +247,16 @@ model TraineeMembership {
   endDate             DateTime
 
   createdAt           DateTime   @default(now())
+   updatedAt    DateTime   @updatedAt
+
+    // Tenant scoping (primary)
+  gymId           String
+  gym             Gym      @relation(fields: [gymId], references: [id])
+  
+  // Branch scoping (secondary)
+  gymBranchId     String
+  gymBranch       GymBranch @relation(fields: [gymBranchId], references: [id])
+  @@index([gymId])
 }
 
 
@@ -201,15 +267,22 @@ model Payment {
   id             String     @id @default(uuid())
   trainee        Trainee    @relation(fields: [traineeId], references: [id])
   traineeId      String
-  //traineeMembership    TraineeMembership?   @relation(fields: [traineeMembershipId], references: [id])
-  //traineeMembershipId  String?              // Optional: to link payment to a specific membership record
   amount         Decimal
   paymentDate    DateTime
   paymentMethod  PaymentMethod
   transactionId  String?
   status         PaymentStatus
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  // Tenant scoping
+  gymId          String
+  gym            Gym        @relation(fields: [gymId], references: [id])
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  
+  // Branch scoping (secondary)
+  gymBranchId     String
+  gymBranch       GymBranch @relation(fields: [gymBranchId], references: [id])
+  @@index([gymId])
 }
 
 model WorkoutPlan {
@@ -222,20 +295,28 @@ model WorkoutPlan {
   description String
   date        DateTime
   exercises   String[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  // Tenant scoping
+  gymId       String
+  gym         Gym      @relation(fields: [gymId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Branch scoping (secondary)
+  gymBranchId     String
+  gymBranch       GymBranch @relation(fields: [gymBranchId], references: [id])
+  @@index([gymId])
 }
 
-model Admin {
-  id          String   @id @default(uuid())
-  username    String   @unique
-  email       String   @unique
-  password    String
-  role        AdminRole
-  posts  CommunityPost[]
-  notifications  Notification[]
-  createdAt   DateTime @default(now())
-}
+//model Admin {
+  //id          String   @id @default(uuid())
+  //username    String   @unique
+  //email       String   @unique
+  //password    String
+  //role        AdminRole
+  //posts  CommunityPost[]
+  //notifications  Notification[]
+  //createdAt   DateTime @default(now())
+//}
 
 
 model TrainerSalary {
@@ -250,21 +331,173 @@ model TrainerSalary {
   paymentMethod   PaymentMethod // Enum: CASH, UPI, BANK_TRANSFER
   status          SalaryStatus  // PAID, PENDING, FAILED
   remarks         String?       // Notes like "March Salary", "Bonus", etc.
+  // Tenant scoping
+  gymId           String
+  gym             Gym          @relation(fields: [gymId], references: [id])
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+
+  
+  // Branch scoping (secondary)
+  gymBranchId     String
+  gymBranch       GymBranch @relation(fields: [gymBranchId], references: [id])
+  @@index([gymId])
 }
+
+
+
+
+
+model CommunityPost {
+  id          String       @id @default(uuid())
+  title       String
+  content     String       // Rich text or plain text
+  imageUrls   String[]     // Optional images (e.g., before/after transformation, announcement banner)
+  category    PostCategory
+
+  isPinned    Boolean      @default(false) // For important or sticky posts
+  visibleTo   UserGroup[]  // Enum: who should see this post (optional)
+
+  // Tenant scoping
+  gymId        String
+  gym          Gym         @relation(fields: [gymId], references: [id])
+
+  gymBranchId  String
+  gymBranch    GymBranch   @relation(fields: [gymBranchId], references: [id])
+
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([gymId, gymBranchId])
+  @@index([userId])
+}
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+model Notification {
+  id           String            @id @default(uuid())
+  title        String
+  message      String
+  type         NotificationType
+
+  relatedId    String?           // Optional: ID of related resource (e.g., traineeId, paymentId, postId)
+  relatedType  RelatedEntity?    // Optional: What type of entity this is about (e.g., TRAINEE, PAYMENT)
+
+  isRead       Boolean           @default(false)
+
+  // Now points to User instead of Admin
+  recipientId  String?
+  recipient    User?             @relation(fields: [recipientId], references: [id])
+
+  // Optional: if sending to a role group
+  targetRole   UserRole?         // Enum: USER, ADMIN, SUPERADMIN (optional)
+
+  // Tenant scoping
+  gymId        String
+  gym          Gym              @relation(fields: [gymId], references: [id])
+
+  gymBranchId  String
+  gymBranch    GymBranch        @relation(fields: [gymBranchId], references: [id])
+
+  createdAt    DateTime          @default(now())
+
+  @@index([gymId, gymBranchId])
+  @@index([recipientId])
+}
+
+
+
+
+
+
+
+model PasswordSetupToken {
+  id          String   @id @default(uuid())
+  token       String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  expiresAt   DateTime
+  used        Boolean  @default(false)
+  createdAt   DateTime @default(now()) 
+
+      // Tenant scoping (primary)
+  gymId           String
+  gym             Gym      @relation(fields: [gymId], references: [id])
+  
+  // Branch scoping (secondary)
+  gymBranchId     String
+  gymBranch       GymBranch @relation(fields: [gymBranchId], references: [id])
+}
+
+
+
+
+enum NotificationType {
+  NEW_MEMBER
+  PAYMENT_RECEIVED
+  COMMUNITY_POST
+  MEMBERSHIP_EXPIRING
+  TRAINER_ASSIGNED
+  NEW_TRAINER
+  TRAINEE_PROGRESS
+  MEMBERSHIP_RENEWAL
+  CUSTOM
+}
+
+enum RelatedEntity {
+  TRAINEE
+  TRAINER
+  PAYMENT
+  COMMUNITY_POST
+  MEMBERSHIP
+}
+
+
+enum PostCategory {
+  ANNOUNCEMENT
+  TRANSFORMATION
+  EVENT
+  TRAINER_UPDATE
+  GENERAL
+  FITNESS_TIP
+  CHALLENGE
+  GYM_TIMING_CHANGE
+}
+
+enum UserGroup {
+  ALL
+  TRAINEE
+  TRAINER
+}
+
+
+enum SalaryStatus {
+  PAID
+  PENDING
+  FAILED
+}
+
+
 
 
 enum SalaryType {
   MONTHLY
   ONE_TIME
   CONTRACT
-}
-
-enum SalaryStatus {
-  PAID
-  PENDING
-  FAILED
 }
 
 
@@ -311,89 +544,6 @@ enum PaymentStatus {
   FAILED
 }
 
-
-
-model CommunityPost {
-  id          String     @id @default(uuid())
-  title       String
-  content     String      // Rich text or plain text
-  imageUrls   String[]    // Optional images (e.g., before/after transformation, announcement banner)
-  category    PostCategory
-  postedBy    Admin       @relation(fields: [adminId], references: [id])
-  adminId     String
-  isPinned    Boolean     @default(false) // For important or sticky posts
-  visibleTo   UserGroup[] // Enum: who should see this post (optional)
-
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-}
-
-enum PostCategory {
-  ANNOUNCEMENT
-  TRANSFORMATION
-  EVENT
-  TRAINER_UPDATE
-  GENERAL
-  FITNESS_TIP
-  CHALLENGE
-  GYM_TIMING_CHANGE
-}
-
-enum UserGroup {
-  ALL
-  TRAINEE
-  TRAINER
-}
-
-
-
-model Notification {
-  id           String       @id @default(uuid())
-  title        String
-  message      String
-  type         NotificationType
-  relatedId    String?       // Optional: ID of related resource (e.g., traineeId, paymentId, postId)
-  relatedType  RelatedEntity? // Optional: What type of entity this is about (e.g., TRAINEE, PAYMENT)
-  isRead       Boolean       @default(false)
-  recipientId  String?       // Optional: In case you want to send specific notifications later (e.g., to one trainer)
-  recipient    Admin?        @relation(fields: [recipientId], references: [id]) // Owner/admin who receives it
-
-  createdAt    DateTime      @default(now())
-}
-
-
-
-enum NotificationType {
-  NEW_MEMBER
-  PAYMENT_RECEIVED
-  COMMUNITY_POST
-  MEMBERSHIP_EXPIRING
-  TRAINER_ASSIGNED
-  NEW_TRAINER
-  TRAINEE_PROGRESS
-  MEMBERSHIP_RENEWAL
-  CUSTOM
-}
-
-enum RelatedEntity {
-  TRAINEE
-  TRAINER
-  PAYMENT
-  COMMUNITY_POST
-  MEMBERSHIP
-}
-
-
-
-model PasswordSetupToken {
-  id          String   @id @default(uuid())
-  token       String   @unique
-  user        User     @relation(fields: [userId], references: [id])
-  userId      String
-  expiresAt   DateTime
-  used        Boolean  @default(false)
-  createdAt   DateTime @default(now())
-}
 
 
 
