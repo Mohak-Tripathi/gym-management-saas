@@ -15,9 +15,9 @@ export class GymBranchService {
     }
   }
 
-  static async getAll() {
+  static async getAll(gymId: string) {
     try {
-      return await GymBranchDatabase.getAll();
+      return await GymBranchDatabase.getAll(gymId); 
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(
@@ -28,9 +28,9 @@ export class GymBranchService {
     }
   }
 
-  static async getById(id: string) {
+  static async getById(id: string, gymId: string) {
     try {
-      const gymBranch = await GymBranchDatabase.getById(id);
+      const gymBranch = await GymBranchDatabase.getById(id, gymId);
       if (!gymBranch) {
         throw new AppError(
           "Gym branch not found",
@@ -49,9 +49,9 @@ export class GymBranchService {
     }
   }
 
-  static async update(id: string, data: any) {
+  static async update(id: string, data: any, gymId: string) {
     try {
-      const existingGymBranch = await GymBranchDatabase.getById(id);
+      const existingGymBranch = await GymBranchDatabase.getById(id, gymId);
       if (!existingGymBranch) {
         throw new AppError(
           "Gym branch not found",
@@ -59,7 +59,7 @@ export class GymBranchService {
           "GYM_BRANCH_NOT_FOUND_ERROR"
         );
       }
-      return await GymBranchDatabase.update(id, data);
+      return await GymBranchDatabase.update(id, data, gymId);
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(
@@ -70,9 +70,9 @@ export class GymBranchService {
     }
   }
 
-  static async delete(id: string) {
+  static async delete(id: string, gymId: string) {
     try {
-      const existingGymBranch = await GymBranchDatabase.getById(id);
+      const existingGymBranch = await GymBranchDatabase.getById(id, gymId);
       if (!existingGymBranch) {
         throw new AppError(
           "Gym branch not found",
@@ -80,7 +80,7 @@ export class GymBranchService {
           "GYM_BRANCH_NOT_FOUND_ERROR"
         );
       }
-      return await GymBranchDatabase.delete(id);
+      return await GymBranchDatabase.delete(id, gymId);
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(

@@ -20,6 +20,19 @@ class UserService {
     }
   }
 
+
+  static async loginUserByEmailAndPassword(data:any) {
+    try {
+      return await UserDatabase.loginCurrentUser(data);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Error fetching users', 500, 'USER_SERVICE_FETCH_ALL_ERROR');
+    }
+  }
+
+
+  
+
   static async getUserById(id: string) {
     try {
       const user = await UserDatabase.getById(id);

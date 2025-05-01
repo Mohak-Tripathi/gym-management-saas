@@ -28,7 +28,13 @@ studio:
 dbpush:
 	docker-compose exec backend sh -c "npx prisma db push"
 
-dev:
+devbuild:
 	docker-compose up --build
+
+dev: 
+	docker-compose up 
+
+create-superadmin:
+	docker-compose exec backend sh -c "npx ts-node src/scripts/createSuperAdminAndGym.ts"
 
 

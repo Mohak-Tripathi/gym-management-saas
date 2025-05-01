@@ -36,36 +36,210 @@
 //     res.json({ message: "Deleted successfully" });
 //   }
 // }
+// import { Request, Response, RequestHandler } from "express";
+// import { MembershipService } from "../services/membership.service";
+// import { handleErrorResponse } from "../utils/handleErrorResponse";
+
+// export class MembershipController {
+//   static create: RequestHandler = async (req: Request, res: Response) => {
+//     try {
+//       const data = req.body;
+//       const gymId = req.user?.gymId; // Get gymId from authenticated user
+//       if (!gymId) {
+//         throw new Error("Gym ID is required");
+//       }
+//       const membership = await MembershipService.createMembership({ ...data, gymId });
+//       res.status(201).json(membership);
+//     } catch (err) {
+//       handleErrorResponse(res, err);
+//     }
+//   }
+
+//   static getAll: RequestHandler = async (req: Request, res: Response) => {
+//     try {
+//       const gymId = req.user?.gymId;
+//       if (!gymId) {
+//         throw new Error("Gym ID is required");
+//       }
+//       const memberships = await MembershipService.getAllMembershipsOfBranch(gymId);
+//       res.json(memberships);
+//     } catch (err) {
+//       handleErrorResponse(res, err);
+//     }
+//   }
+
+//   static getById: RequestHandler = async (req: Request, res: Response) => {
+//     try {
+//       const { id } = req.params;
+//       const gymId = req.user?.gymId;
+//       if (!gymId) {
+//         throw new Error("Gym ID is required");
+//       }
+//       const membership = await MembershipService.getMembershipOfBranchById(id, gymId);
+
+//       if (!membership) {
+//         res.status(404).json({
+//           message: "Membership not found",
+//           code: "MEMBERSHIP_NOT_FOUND",
+//         });
+//         return;
+//       }
+
+//       res.json(membership);
+//     } catch (err) {
+//       handleErrorResponse(res, err);
+//     }
+//   }
+
+//   static update: RequestHandler = async (req: Request, res: Response) => {
+//     try {
+//       const { id } = req.params;
+//       const data = req.body;
+//       const gymId = req.user?.gymId;
+//       if (!gymId) {
+//         throw new Error("Gym ID is required");
+//       }
+//       const membership = await MembershipService.updateMembershipofBranch(id, data, gymId);
+//       res.json(membership);
+//     } catch (err) {
+//       handleErrorResponse(res, err);
+//     }
+//   }
+
+//   static delete: RequestHandler = async (req: Request, res: Response) => {
+//     try {
+//       const { id } = req.params;
+//       const gymId = req.user?.gymId;
+//       if (!gymId) {
+//         throw new Error("Gym ID is required");
+//       }
+//       await MembershipService.deleteMembershipOfBranch(id, gymId);
+//       res.json({ message: "Membership deleted successfully" });
+//     } catch (err) {
+//       handleErrorResponse(res, err);
+//     }
+//   }
+// }
+
+
+// import { Request, Response, RequestHandler } from "express";
+// import { MembershipService } from "../services/membership.service";
+// import { handleErrorResponse } from "../utils/handleErrorResponse";
+
+// export class MembershipController {
+//   static create: RequestHandler = async (req: Request, res: Response) => {
+//     try {
+//       const data = req.body;
+//       const membership = await MembershipService.createMembership(data);
+//       res.status(201).json(membership);
+//     } catch (err) {
+//      handleErrorResponse(res, err);
+//     }
+//   }
+
+//   static getAll: RequestHandler = async (req: Request, res: Response) => {
+//     try {
+//       const memberships = await MembershipService.getAllMemberships();
+//       res.json(memberships);
+//     } catch (err) {
+//        handleErrorResponse(res, err);
+//     }
+//   }
+
+//   static getById: RequestHandler = async (req: Request, res: Response) => {
+//     try {
+//       const { id } = req.params;
+//       const membership = await MembershipService.getMembershipById(id);
+
+//       if (!membership) {
+//         res.status(404).json({
+//           message: "Membership not found",
+//           code: "MEMBERSHIP_NOT_FOUND",
+//         });
+//         return;
+//       }
+
+//       res.json(membership);
+//     } catch (err) {
+//       handleErrorResponse(res, err);
+//     }
+//   }
+
+//   static update: RequestHandler = async (req: Request, res: Response) => {
+//     try {
+//       const { id } = req.params;
+//       const data = req.body;
+//       const membership = await MembershipService.updateMembership(id, data);
+//       res.json(membership);
+//     } catch (err) {
+//       handleErrorResponse(res, err);
+//     }
+//   }
+
+//   static delete: RequestHandler = async (req: Request, res: Response) => {
+//     try {
+//       const { id } = req.params;
+//       await MembershipService.deleteMembership(id);
+//       res.json({ message: "Deleted successfully" });
+//     } catch (err) {
+//       handleErrorResponse(res, err);
+//     }
+//   }
+// }
+
 
 
 import { Request, Response, RequestHandler } from "express";
 import { MembershipService } from "../services/membership.service";
-import { handleErrorResponse } from "../utils/handleErrorResponse";
+ import { handleErrorResponse } from "../utils/handleErrorResponse";
+
 
 export class MembershipController {
   static create: RequestHandler = async (req: Request, res: Response) => {
     try {
       const data = req.body;
-      const membership = await MembershipService.createMembership(data);
+      const { gymId, gymBranchId } = req.user!; // Get both gymId and branchId from authenticated user
+      
+      if (!gymId || !gymBranchId) {
+        throw new Error("Gym ID and Branch ID are required");
+      }
+
+      const membership = await MembershipService.createMembership({
+        ...data,
+        gymId,
+        branchId: gymBranchId
+      });
       res.status(201).json(membership);
     } catch (err) {
-     handleErrorResponse(res, err);
+      handleErrorResponse(res, err);
     }
   }
 
   static getAll: RequestHandler = async (req: Request, res: Response) => {
     try {
-      const memberships = await MembershipService.getAllMemberships();
+      const { gymId, gymBranchId } = req.user!;
+      
+      if (!gymId || !gymBranchId) {
+        throw new Error("Gym ID and Branch ID are required");
+      }
+
+      const memberships = await MembershipService.getMemberships(gymId, gymBranchId);
       res.json(memberships);
     } catch (err) {
-       handleErrorResponse(res, err);
+      handleErrorResponse(res, err);
     }
   }
 
   static getById: RequestHandler = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const membership = await MembershipService.getMembershipById(id);
+      const { gymId, gymBranchId } = req.user!;
+
+      if (!gymId || !gymBranchId) {
+        throw new Error("Gym ID and Branch ID are required");
+      }
+
+      const membership = await MembershipService.getMembershipById(id, gymId, gymBranchId);
 
       if (!membership) {
         res.status(404).json({
@@ -85,7 +259,13 @@ export class MembershipController {
     try {
       const { id } = req.params;
       const data = req.body;
-      const membership = await MembershipService.updateMembership(id, data);
+      const { gymId, gymBranchId } = req.user!;
+
+      if (!gymId || !gymBranchId) {
+        throw new Error("Gym ID and Branch ID are required");
+      }
+
+      const membership = await MembershipService.updateMembership(id, data, gymId, gymBranchId);
       res.json(membership);
     } catch (err) {
       handleErrorResponse(res, err);
@@ -95,7 +275,13 @@ export class MembershipController {
   static delete: RequestHandler = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      await MembershipService.deleteMembership(id);
+      const { gymId, gymBranchId } = req.user!;
+
+      if (!gymId || !gymBranchId) {
+        throw new Error("Gym ID and Branch ID are required");
+      }
+
+      await MembershipService.deleteMembership(id, gymId, gymBranchId);
       res.json({ message: "Deleted successfully" });
     } catch (err) {
       handleErrorResponse(res, err);

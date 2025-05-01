@@ -188,3 +188,23 @@ By following this pattern, you will have a **cleaner and more maintainable archi
 
 🧪 Bonus Tip: Soft Partitioning with Row-Level Security (PostgreSQL)
 Later (not now), if you want DB-level enforcement, PostgreSQL supports row-level security policies. These can make it impossible for a bad query to leak tenant data even accidentally.
+
+
+
+
+
+
+
+
+
+Each model now has a gymId field and a relation to the Gym model, ensuring proper tenant isolation.
+
+When implementing the application logic, you'll need to:
+  Always include the gymId when creating new records
+  Filter queries by gymId to ensure data isolation
+  Implement middleware or a service layer that automatically adds tenant context to all queries
+For your API implementation, you should:
+  Extract the gymId from the authenticated user's context
+  Implement middleware that validates tenant access
+  Ensure all queries and mutations are scoped to the correct tenant
+Security consid

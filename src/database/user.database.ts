@@ -1,19 +1,57 @@
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../utils/AppError';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+
 
 const prisma = new PrismaClient();
 
 export class UserDatabase {
+  // static async create(data: any) {
+  //   try {
+  //     return await prisma.user.create({ data });
+  //   } catch (error) {
+  //     console.log(error, "error-user")
+  //     throw new AppError(
+  //       "Error creating user",
+  //       500,
+  //       "USER_DB_CREATE_ERROR"
+  //     );
+  //   }
+  // }
+
   static async create(data: any) {
+    const { role, branchId, gymId, ...userData } = data;
+
     try {
+      // Hash password if present
+      // if (userData.password) {
+      //   userData.password = await bcrypt.hash(userData.password, 10);
+      // }
+
+      // // If role is ADMIN or RECEPTIONIST, create user and staffBranch in a transaction
+      // if (role === 'ADMIN' || role === 'RECEPTIONIST') {
+      //   return await prisma.$transaction(async (tx) => {
+      //     const user = await tx.user.create({ data: userData });
+
+      //     await tx.staffBranch.create({
+      //       data: {
+      //         userId: user.id,
+      //         role,
+      //         branchId,
+      //         gymId,
+      //       },
+      //     });
+
+      //     return user;
+      //   });
+      // }
+
+      // For other roles, just create the user
       return await prisma.user.create({ data });
     } catch (error) {
-      console.log(error, "error-user")
-      throw new AppError(
-        "Error creating user",
-        500,
-        "USER_DB_CREATE_ERROR"
-      );
+      console.log(error, "error-user");
+      throw new AppError("Error creating user", 500, "USER_DB_CREATE_ERROR");
     }
   }
 
@@ -28,6 +66,106 @@ export class UserDatabase {
       );
     }
   }
+
+
+  
+  // static async loginCurrentUser(data:any) {
+  //   const { email, password } = data;
+
+  //   const user =  await prisma.user.findUnique({
+  //     where: { email }
+  //   });
+  
+  //   if (!user) {
+  //     throw new AppError(
+  //       "user not found",
+  //       404,
+  //       "USER_DB_NOT_FOUND_ERROR"
+  //     );
+  //   }
+  
+  //   const isValid = await bcrypt.compare(password, user.password);
+  
+  //   if (!isValid) {
+  //     throw new AppError(
+  //       "invalid credentials",
+  //       403,
+  //       "USER_DB_CREDENTIALS_FOUND_WRONG"
+  //     );
+  //   }
+  
+  //   const payload = {
+  //     userId: user.id,
+  //     role: user.role,
+  //     gymId: user.gymId,
+  //     gymBranchId: user.gymBranchId ?? null,
+  //   };
+  
+  //   const token = jwt.sign(payload, process.env.JWT_SECRET as string, {
+  //     expiresIn: '7d',
+  //   });
+  
+  //   return ({
+  //     token,
+  //     user: payload,
+  //   });
+  // }
+
+
+  static async loginCurrentUser(data: any) {
+    const { email, password } = data;
+  
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        gym: true,        // optional (if you want to use gym details later)
+        gymBranch: true,  // optional (if you want branch details later)
+      }
+    });
+  
+    if (!user) {
+      throw new AppError(
+        "User not found",
+        404,
+        "USER_DB_NOT_FOUND_ERROR"
+      );
+    }
+
+    if (!user.password) {
+      throw new AppError(
+        "User password not set",
+        500,
+        "USER_DB_PASSWORD_NULL_ERROR"
+      );
+    }
+  
+    const isValid = await bcrypt.compare(password, user.password);
+  
+    if (!isValid) {
+      throw new AppError(
+        "Invalid credentials",
+        403,
+        "USER_DB_CREDENTIALS_INVALID_ERROR"
+      );
+    }
+  
+    const payload = {
+      userId: user.id,
+      role: user.role,
+      gymId: user.gymId,
+      gymBranchId: user.gymBranchId ?? null,
+    };
+  
+    const token = jwt.sign(payload, process.env.JWT_SECRET as string, {
+      expiresIn: '7d',
+    });
+  
+    return {
+      token,
+      user: payload,
+    };
+  }
+  
 
   static async getById(id: string) {
     try {

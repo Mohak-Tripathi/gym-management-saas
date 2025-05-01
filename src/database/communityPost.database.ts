@@ -20,9 +20,9 @@ export class CommunityPostDatabase {
   static async getAll() {
     try {
       return await prisma.communityPost.findMany({
-        include: {
-          postedBy: true,
-        },
+        // include: {
+        //   postedBy: true,
+        // },
         orderBy: { createdAt: "desc" },
       });
     } catch (error) {
@@ -37,10 +37,10 @@ export class CommunityPostDatabase {
   static async getById(id: string) {
     try {
       return await prisma.communityPost.findUnique({
-        where: { id },
-        include: {
-          postedBy: true,
-        },
+        where: { id }
+        // include: {
+        //   postedBy: true,
+        // },
       });
     } catch (error) {
       throw new AppError(
@@ -56,9 +56,9 @@ export class CommunityPostDatabase {
       return await prisma.communityPost.update({
         where: { id },
         data,
-        include: {
-          postedBy: true,
-        },
+        // include: {
+        //   postedBy: true,
+        // },
       });
     } catch (error) {
       throw new AppError(

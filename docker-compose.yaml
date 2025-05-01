@@ -29,8 +29,8 @@ services:
     #   DATABASE_URL: "postgresql://postgres:password@db:5432/gym_db"
     volumes:
       - .:/app
-      - /app/node_modules
-    command: sh -c "npm run dev"  # dev should run ts-node or nodemon (your local entry point)
+      # - /app/node_modules
+    command: sh -c "npx prisma generate && npm run dev"  # dev should run ts-node or nodemon (your local entry point)
     # if using nodemon, update package.json: "dev": "nodemon src/index.ts"
     # command: sh -c "npx prisma generate && npx prisma migrate dev --name init && npm run build && npm run start"
 

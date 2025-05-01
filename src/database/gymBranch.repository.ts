@@ -10,6 +10,7 @@ export class GymBranchDatabase {
     try {
       return await prisma.gymBranch.create({ data });
     } catch (error) {
+      console.log(error, "errorGymBranch")
       throw new AppError(
         "Error creating gym branch",
         500,
@@ -18,10 +19,11 @@ export class GymBranchDatabase {
     }
   }
 
-  static async getAll() {
+  static async getAll(gymId: string) {
     try {
       return await prisma.gymBranch.findMany({
-        orderBy: { createdAt: "desc" }
+        where: { gymId },              // ✅ filter by gym
+        orderBy: { createdAt: "desc" },
       });
     } catch (error) {
       throw new AppError(
@@ -32,10 +34,10 @@ export class GymBranchDatabase {
     }
   }
 
-  static async getById(id: string) {
+  static async getById(id: string, gymId: string) {
     try {
       return await prisma.gymBranch.findUnique({
-        where: { id }
+        where: { id, gymId }
       });
     } catch (error) {
       throw new AppError(
@@ -46,10 +48,14 @@ export class GymBranchDatabase {
     }
   }
 
-  static async update(id: string, data: any) {
+
+  static async update(id: string, data: any, gymId: string) {
     try {
       return await prisma.gymBranch.update({
-        where: { id },
+        where: { 
+          id,
+          gymId // Add tenant scoping
+        },
         data
       });
     } catch (error) {
@@ -61,10 +67,15 @@ export class GymBranchDatabase {
     }
   }
 
-  static async delete(id: string) {
+
+
+  static async delete(id: string, gymId: string) {
     try {
       return await prisma.gymBranch.delete({
-        where: { id }
+        where: { 
+          id,
+          gymId // Add tenant scoping
+        }
       });
     } catch (error) {
       throw new AppError(
@@ -74,4 +85,5 @@ export class GymBranchDatabase {
       );
     }
   }
+
 }
