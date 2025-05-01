@@ -7,16 +7,51 @@ import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 export class UserDatabase {
+  // static async create(data: any) {
+  //   try {
+  //     return await prisma.user.create({ data });
+  //   } catch (error) {
+  //     console.log(error, "error-user")
+  //     throw new AppError(
+  //       "Error creating user",
+  //       500,
+  //       "USER_DB_CREATE_ERROR"
+  //     );
+  //   }
+  // }
+
   static async create(data: any) {
+    const { role, branchId, gymId, ...userData } = data;
+
     try {
+      // Hash password if present
+      // if (userData.password) {
+      //   userData.password = await bcrypt.hash(userData.password, 10);
+      // }
+
+      // // If role is ADMIN or RECEPTIONIST, create user and staffBranch in a transaction
+      // if (role === 'ADMIN' || role === 'RECEPTIONIST') {
+      //   return await prisma.$transaction(async (tx) => {
+      //     const user = await tx.user.create({ data: userData });
+
+      //     await tx.staffBranch.create({
+      //       data: {
+      //         userId: user.id,
+      //         role,
+      //         branchId,
+      //         gymId,
+      //       },
+      //     });
+
+      //     return user;
+      //   });
+      // }
+
+      // For other roles, just create the user
       return await prisma.user.create({ data });
     } catch (error) {
-      console.log(error, "error-user")
-      throw new AppError(
-        "Error creating user",
-        500,
-        "USER_DB_CREATE_ERROR"
-      );
+      console.log(error, "error-user");
+      throw new AppError("Error creating user", 500, "USER_DB_CREATE_ERROR");
     }
   }
 
@@ -93,6 +128,14 @@ export class UserDatabase {
         "User not found",
         404,
         "USER_DB_NOT_FOUND_ERROR"
+      );
+    }
+
+    if (!user.password) {
+      throw new AppError(
+        "User password not set",
+        500,
+        "USER_DB_PASSWORD_NULL_ERROR"
       );
     }
   

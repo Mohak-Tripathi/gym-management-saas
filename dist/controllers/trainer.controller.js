@@ -6,7 +6,7 @@ const handleErrorResponse_1 = require("../utils/handleErrorResponse");
 exports.TrainerController = {
     async create(req, res) {
         try {
-            const trainer = await trainer_service_1.TrainerService.createTrainer(req.body);
+            const trainer = await trainer_service_1.TrainerService.onBoardTrainer(req.body);
             res.status(201).json({
                 status: "success",
                 data: trainer

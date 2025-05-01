@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const communityPost_controller_1 = require("../controllers/communityPost.controller");
+const router = (0, express_1.Router)();
+router.post("/", communityPost_controller_1.CommunityPostController.create);
+router.get("/", communityPost_controller_1.CommunityPostController.getAll);
+router.get("/:id", communityPost_controller_1.CommunityPostController.getById);
+router.put("/:id", communityPost_controller_1.CommunityPostController.update);
+router.delete("/:id", communityPost_controller_1.CommunityPostController.delete);
+exports.default = router;

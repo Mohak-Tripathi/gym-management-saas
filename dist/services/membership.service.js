@@ -27,9 +27,11 @@ class MembershipService {
             return await membership_database_1.MembershipDatabase.create(data);
         }
         catch (error) {
+            // Re-throw database or other lower-level AppErrors
             if (error instanceof AppError_1.AppError) {
                 throw error;
             }
+            // Create new service-specific error for unknown errors
             throw new AppError_1.AppError("Service error while creating membership", 500, "MEMBERSHIP_SERVICE_CREATE_ERROR");
         }
     }
@@ -38,9 +40,11 @@ class MembershipService {
             return await membership_database_1.MembershipDatabase.getAll();
         }
         catch (error) {
+            // Re-throw database or other lower-level AppErrors
             if (error instanceof AppError_1.AppError) {
                 throw error;
             }
+            // Create new service-specific error for unknown errors
             throw new AppError_1.AppError("Service error while fetching all memberships", 500, "MEMBERSHIP_SERVICE_GET_ALL_ERROR");
         }
     }

@@ -1,12 +1,24 @@
-import { Request, Response } from 'express';
-import { GymBranchService } from '../services/gymBranch.service';
-import { handleErrorResponse } from '../utils/handleErrorResponse';
+import { Request, Response } from "express";
+import { GymBranchService } from "../services/gymBranch.service";
+import { handleErrorResponse } from "../utils/handleErrorResponse";
 
 export class GymBranchController {
   static async create(req: Request, res: Response) {
     try {
-      const gymBranch = await GymBranchService.create(req.body);
-       res.status(201).json(gymBranch);
+      const { user } = req;
+
+      if (!user || user.role !== "SUPERADMIN") {
+        res.status(403).json({ error: "Unauthorized to create gym branches" });
+        return;
+      }
+
+      const dataWithGymId = {
+        ...req.body,
+        gymId: user.gymId, // enforce tenant scoping
+      };
+
+      const gymBranch = await GymBranchService.create(dataWithGymId);
+      res.status(201).json(gymBranch);
     } catch (err) {
       handleErrorResponse(res, err);
     }
@@ -14,50 +26,126 @@ export class GymBranchController {
 
   static async getAll(req: Request, res: Response) {
     try {
-      const gymBranches = await GymBranchService.getAll();
+      const { user } = req;
+
+      if (!user) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+
+      const gymBranches = await GymBranchService.getAll(user.gymId);
       res.status(200).json(gymBranches);
     } catch (err) {
       handleErrorResponse(res, err);
     }
   }
 
+  // static async create(req: Request, res: Response) {
+  //   try {
+  //     const gymBranch = await GymBranchService.create(req.body);
+  //      res.status(201).json(gymBranch);
+  //   } catch (err) {
+  //     handleErrorResponse(res, err);
+  //   }
+  // }
+
+  // static async getAll(req: Request, res: Response) {
+  //   try {
+  //     const gymBranches = await GymBranchService.getAll();
+  //     res.status(200).json(gymBranches);
+  //   } catch (err) {
+  //     handleErrorResponse(res, err);
+  //   }
+  // }
+
   static async getById(req: Request, res: Response) {
     try {
+      const { user } = req;
       const { id } = req.params;
-      const gymBranch = await GymBranchService.getById(id);
+
+      if (!user) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+      const gymBranch = await GymBranchService.getById(id, user.gymId);
 
       if (!gymBranch) {
         res.status(404).json({
           message: "GymBranch not found",
-          code: "GYM_BRANCH_NOT_FOUND"
+          code: "GYM_BRANCH_NOT_FOUND",
         });
         return;
       }
 
-       res.status(200).json(gymBranch);
+      res.status(200).json(gymBranch);
     } catch (err) {
       handleErrorResponse(res, err);
     }
   }
 
+  // static async update(req: Request, res: Response) {
+  //   try {
+  //     const { id } = req.params;
+  //     const updatedGymBranch = await GymBranchService.update(id, req.body);
+  //     res.status(200).json(updatedGymBranch);
+  //   } catch (err) {
+  //     handleErrorResponse(res, err);
+  //   }
+  // }
   static async update(req: Request, res: Response) {
     try {
+      const { user } = req;
       const { id } = req.params;
-      const updatedGymBranch = await GymBranchService.update(id, req.body);
-       res.status(200).json(updatedGymBranch);
+  
+      if (!user || !['SUPERADMIN', 'ADMIN'].includes(user.role)) {
+        res.status(403).json({ error: 'Unauthorized to update gym branches' });
+        return;
+      }
+  
+      const dataWithGymId = {
+        ...req.body,
+        gymId: user.gymId, // enforce tenant scoping
+      };
+  
+      const updatedGymBranch = await GymBranchService.update(id, dataWithGymId, user.gymId);
+      res.status(200).json(updatedGymBranch);
     } catch (err) {
       handleErrorResponse(res, err);
     }
   }
+
+  // static async delete(req: Request, res: Response) {
+  //   try {
+
+  //     const { user } = req;
+  //     const { id } = req.params;
+  
+  //     if (!user || user.role !== 'SUPERADMIN') {
+  //       res.status(403).json({ error: 'Unauthorized to delete gym branches' });
+  //       return;
+  //     }
+  
+  //     await GymBranchService.delete(id, user.gymId);
+  //     res.status(204).json((message: "gymBranch deleted"))
+  //   } catch (err) {
+  //     handleErrorResponse(res, err);
+  //   }
+  // }
 
   static async delete(req: Request, res: Response) {
     try {
+      const { user } = req;
       const { id } = req.params;
-      await GymBranchService.delete(id);
+  
+      if (!user || user.role !== 'SUPERADMIN') {
+        res.status(403).json({ error: 'Unauthorized to delete gym branches' });
+        return;
+      }
+  
+      await GymBranchService.delete(id, user.gymId);
       res.status(204).send();
     } catch (err) {
       handleErrorResponse(res, err);
     }
   }
 }
-

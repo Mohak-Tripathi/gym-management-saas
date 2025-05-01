@@ -84,6 +84,7 @@ model Gym {
   traineeMemberships TraineeMembership[] 
 
   passwordSetupTokens PasswordSetupToken[]
+  staffBranches  StaffBranch[]
 
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
@@ -106,6 +107,7 @@ model GymBranch {
   trainers     Trainer[]
   traineeMemberships TraineeMembership[] // Inverse relation
   users        User[]
+  staffBranches  StaffBranch[]
 
   notifications Notification[]
   payments      Payment[]
@@ -142,6 +144,7 @@ model User {
   trainee     Trainee?  @relation("UserTrainee")
   trainer     Trainer?  @relation("UserTrainer")
   notifications  Notification[]  
+  staffBranches  StaffBranch[]  // 👈 back relation
 
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
@@ -151,10 +154,14 @@ model User {
   @@index([gymBranchId])
 }
 
+
+
 enum UserRole {
   SUPERADMIN
   ADMIN
   RECEPTIONIST
+  TRAINER
+  TRAINEE
 }
 
 
@@ -217,17 +224,17 @@ model Membership {
   actualPrice  Decimal      @default(0)   // Original price
   baseDuration Int          @default(0) // Base duration in months
   benefits     String[]   // Generic benefits
+
+  traineeMemberships TraineeMembership[] // One-to-many
+
   // Tenant scoping
   gymId        String
   gym          Gym        @relation(fields: [gymId], references: [id])
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  traineeMemberships TraineeMembership[] // One-to-many
-
-  
   // Branch scoping (secondary)
   gymBranchId     String
   gymBranch       GymBranch @relation(fields: [gymBranchId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }
 
 model TraineeMembership {
@@ -543,6 +550,30 @@ enum PaymentStatus {
   PENDING
   FAILED
 }
+
+
+
+model StaffBranch {
+  id        String    @id @default(uuid())
+  userId    String
+  branchId  String
+  gymId     String
+  role      UserRole
+
+  user      User       @relation(fields: [userId], references: [id])
+  branch    GymBranch  @relation(fields: [branchId], references: [id])
+  gym       Gym        @relation(fields: [gymId], references: [id])
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@unique([userId, branchId, role])
+  @@index([userId])
+  @@index([branchId])
+  @@index([gymId])
+  @@index([role])
+}
+
 
 
 

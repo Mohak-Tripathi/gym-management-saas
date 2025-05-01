@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.handleErrorResponse = handleErrorResponse;
+exports.handleErrorResponse = void 0;
 const AppError_1 = require("./AppError");
 function handleErrorResponse(res, err) {
     const status = err instanceof AppError_1.AppError ? err.statusCode : 500;
@@ -12,3 +12,4 @@ function handleErrorResponse(res, err) {
         errorCode,
     });
 }
+exports.handleErrorResponse = handleErrorResponse;

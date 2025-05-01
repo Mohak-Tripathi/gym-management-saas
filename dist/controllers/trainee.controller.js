@@ -4,13 +4,22 @@ exports.TraineeController = void 0;
 const trainee_service_1 = require("../services/trainee.service");
 const handleErrorResponse_1 = require("../utils/handleErrorResponse");
 class TraineeController {
-    static async create(req, res) {
+    // static async create(req: Request, res: Response) {
+    //   try {
+    //     const trainee = await TraineeService.createTrainee(req.body);
+    //     res.status(201).json({
+    //       status: "success",
+    //       data: trainee
+    //     });
+    //   } catch (err) {
+    //     handleErrorResponse(res, err);
+    //   }
+    // }
+    static async onboard(req, res) {
         try {
-            const trainee = await trainee_service_1.TraineeService.createTrainee(req.body);
-            res.status(201).json({
-                status: "success",
-                data: trainee
-            });
+            const data = req.body; // contains both traineeData and traineeMembershipData
+            const result = await trainee_service_1.TraineeService.onboardTraineeWithMembership(data);
+            res.status(201).json(result);
         }
         catch (err) {
             (0, handleErrorResponse_1.handleErrorResponse)(res, err);
