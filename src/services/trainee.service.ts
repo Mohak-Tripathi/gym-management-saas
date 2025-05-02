@@ -80,9 +80,9 @@ static async onboardTraineeWithMembership(data: any) {
 
 
 
-  static async getAllTrainees() {
+  static async getAllTrainees(gymId: string) {
     try {
-      const trainees = await TraineeDatabase.getAll();
+      const trainees = await TraineeDatabase.getAll(gymId);
       return trainees;
     } catch (error) {
       if (error instanceof AppError) {
@@ -96,9 +96,9 @@ static async onboardTraineeWithMembership(data: any) {
     }
   }
 
-  static async getTraineeById(id: string) {
+  static async getTraineeById(id: string, gymId: string) {
     try {
-      const trainee = await TraineeDatabase.getById(id);
+      const trainee = await TraineeDatabase.getById(id, gymId);
       if (!trainee) {
         throw new AppError(
           "Trainee not found",

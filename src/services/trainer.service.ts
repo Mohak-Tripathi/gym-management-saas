@@ -12,6 +12,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 import crypto from 'crypto';
 import { addMinutes } from 'date-fns';
+import { hashPassword } from "../utils/hashPassword";
 
 
 export class TrainerService {
@@ -42,10 +43,19 @@ export class TrainerService {
         throw new AppError("Invalid user role for trainer onboarding", 400, "INVALID_ROLE");
       }
 
-      const result = await prisma.$transaction(async (tx: any) => {
+      console.log(data, "data23")
+        // Generate a secure random password
+    const plainPassword = crypto.randomBytes(12).toString('hex'); // 24 character random string
+        // Hash the password for storage
+    const hashedPassword = await hashPassword(plainPassword);
+
+    const result = await prisma.$transaction(async (tx: any) => {
         // 1. Create User
         const user = await tx.user.create({
-          data: userData,
+          data: {
+            ...userData,
+            password: hashedPassword, // Store hashed password
+          },
         });
 
         // 2. Create Trainer linked to User
@@ -56,18 +66,19 @@ export class TrainerService {
           },
         });
 
-        const token = crypto.randomBytes(32).toString('hex');
-        const expiresAt = addMinutes(new Date(), 60);
+        // const token = crypto.randomBytes(32).toString('hex');
+        // const expiresAt = addMinutes(new Date(), 60);
 
-        await tx.passwordSetupToken.create({
-          data: { token, userId: user.id, expiresAt },
-        });
+        // await tx.passwordSetupToken.create({
+        //   data: { token, userId: user.id, expiresAt },
+        // });
 
-        return { user, trainer, token };
+        // return { user, trainer, token };
+        return { user, trainer, plainPassword };
       });
 
       // 📤 Email logic AFTER transaction
-      await sendPasswordSetupEmail(result.user.email, result.token);
+       await sendPasswordSetupEmail(result.user.email, result.plainPassword);
 
       return result;
    
@@ -82,9 +93,9 @@ export class TrainerService {
   }
 }
 
-static async getAllTrainers(gymId: string) {
+static async getAllTrainers(gymId: string, gymBranchId:string) {
   try {
-    return await TrainerDB.getAll(gymId);
+    return await TrainerDB.getAll(gymId, gymBranchId);
   } catch (error) {
     if (error instanceof AppError) {
       throw error;
@@ -97,9 +108,19 @@ static async getAllTrainers(gymId: string) {
   }
 }
 
-static async getTrainerById(id: string, gymId: string) {
+static async getTrainerById(id: string, gymId: string, gymBranchId:string) {
   try {
-    return await TrainerDB.getById(id, gymId);
+    const trainer =  await TrainerDB.getById(id, gymId, gymBranchId);
+
+    if (!trainer) {
+      throw new AppError(
+        "Trainer not found",
+        404,
+        "TRAINER_SERVICE_NOT_FOUND_ERROR"
+      );
+    }
+    return trainer;
+
   } catch (error) {
     if (error instanceof AppError) {
       throw error;
@@ -112,9 +133,9 @@ static async getTrainerById(id: string, gymId: string) {
   }
 }
 
-static async updateTrainer(id: string, data: any) {
+static async updateTrainer(id: string, data: any, gymId:string, gymBranchId:string) {
   try {
-    return await TrainerDB.update(id, data);
+    return await TrainerDB.update(id, data, gymId, gymBranchId);
   } catch (error) {
     if (error instanceof AppError) {
       throw error;
@@ -127,9 +148,9 @@ static async updateTrainer(id: string, data: any) {
   }
 }
 
-static async deleteTrainer(id: string, gymId: string) {
+static async deleteTrainer(id: string, gymId: string, gymBranchId:string) {
   try {
-    return await TrainerDB.delete(id, gymId);
+    return await TrainerDB.delete(id, gymId, gymBranchId);
   } catch (error) {
     if (error instanceof AppError) {
       throw error;

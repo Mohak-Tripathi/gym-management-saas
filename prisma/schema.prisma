@@ -23,9 +23,6 @@ datasource db {
 
 model Trainee {
   id               String     @id @default(uuid())
-  fullName         String
-  email            String     @unique
-  phone            String
   referenceMobileNo    String?    // Emergency or referral contact
   gender           Gender
   image                String?    // Profile picture URL
@@ -169,7 +166,6 @@ enum UserRole {
 
 model Trainer {
   id               String       @id @default(uuid())
-  fullName         String
   referenceMobileNo String?
   gender           Gender     @default(MALE)
   specialization   String[]
@@ -178,8 +174,6 @@ model Trainer {
   lastLoggedIn     DateTime?
   status           TrainerStatus @default(ACTIVE)
   experienceYears  Int
-  phone            String
-  email            String       @unique
   certifications   Certification[]
   trainees         Trainee[]
   workoutPlans     WorkoutPlan[]

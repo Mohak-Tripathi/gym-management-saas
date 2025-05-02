@@ -17,7 +17,7 @@ export class TraineeDatabase {
     }
   }
 
-  static async getAll() {
+  static async getAll(gymId:string) {
     try {
       return await prisma.trainee.findMany({
         include: {
@@ -35,7 +35,7 @@ export class TraineeDatabase {
   }
 
 
-  static async getById(id: string) {
+  static async getById(id: string, gymBranchId:string) {
     try {
       return await prisma.trainee.findUnique({
         where: { id },
