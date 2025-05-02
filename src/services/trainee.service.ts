@@ -9,11 +9,13 @@ const prisma = new PrismaClient();
 import crypto from 'crypto';
 import { addMinutes } from 'date-fns';
 import { sendPasswordSetupEmail } from "../utils/emailService";
+import { hashPassword } from "../utils/hashPassword";
 
 export class TraineeService {
 
 
 static async onboardTraineeWithMembership(data: any) {
+
   const {
     userData, // contains email, password, fullName, role (should be TRAINEE), etc.
     traineeData, // contains gender, DOB, etc.
@@ -26,10 +28,19 @@ static async onboardTraineeWithMembership(data: any) {
         throw new AppError("Invalid user role for trainee onboarding", 400, "INVALID_ROLE");
       }
 
+      // Generate a secure random password
+      const plainPassword = crypto.randomBytes(12).toString("hex"); // 24 character random string
+      // Hash the password for storage
+      const hashedPassword = await hashPassword(plainPassword);
+
+
     const result = await prisma.$transaction(async (tx:any) => {
       // 1. Create User
       const user = await tx.user.create({
-        data: userData,
+        data: {
+          ...userData,
+          password: hashedPassword, // Store hashed password
+        }
       });
 
       // 2. Create Trainee linked to User
@@ -51,21 +62,21 @@ static async onboardTraineeWithMembership(data: any) {
       });
 
 
-      const token = crypto.randomBytes(32).toString('hex');
-      const expiresAt = addMinutes(new Date(), 60);
+      // const token = crypto.randomBytes(32).toString('hex');
+      // const expiresAt = addMinutes(new Date(), 60);
     
-      await tx.passwordSetupToken.create({
-        data: { token, userId: user.id, expiresAt },
-      });
+      // await tx.passwordSetupToken.create({
+      //   data: { token, userId: user.id, expiresAt },
+      // });
     
-      return { user, trainee, traineeMembership: membership, token };
+      return { user, trainee, traineeMembership: membership, plainPassword};
     });
 
     // ✅ Transaction complete
 
     // 📤 Email logic AFTER transaction
     console.log(result, "result")
-    await sendPasswordSetupEmail(result.user.email, result.token);
+    await sendPasswordSetupEmail(result.user.email, result.plainPassword);
 
   } catch (error) {
     console.error("Onboarding Error:", error);
@@ -78,11 +89,9 @@ static async onboardTraineeWithMembership(data: any) {
 }
 
 
-
-
-  static async getAllTrainees(gymId: string) {
+  static async getAllTrainees(gymId: string, gymBranchId: string) {
     try {
-      const trainees = await TraineeDatabase.getAll(gymId);
+      const trainees = await TraineeDatabase.getAll(gymId, gymBranchId);
       return trainees;
     } catch (error) {
       if (error instanceof AppError) {
@@ -96,9 +105,9 @@ static async onboardTraineeWithMembership(data: any) {
     }
   }
 
-  static async getTraineeById(id: string, gymId: string) {
+  static async getTraineeById(id: string, gymId: string, gymBranchId: string) {
     try {
-      const trainee = await TraineeDatabase.getById(id, gymId);
+      const trainee = await TraineeDatabase.getById(id, gymId, gymBranchId);
       if (!trainee) {
         throw new AppError(
           "Trainee not found",
@@ -119,9 +128,12 @@ static async onboardTraineeWithMembership(data: any) {
     }
   }
 
-  static async updateTrainee(id: string, data: any) {
+  static async updateTrainee(    id: string,
+    data: any,
+    gymId: string,
+    gymBranchId: string) {
     try {
-      const trainee = await TraineeDatabase.update(id, data);
+      const trainee = await TraineeDatabase.update(id, data, gymId, gymBranchId);
       return trainee;
     } catch (error) {
       if (error instanceof AppError) {
@@ -135,9 +147,9 @@ static async onboardTraineeWithMembership(data: any) {
     }
   }
 
-  static async deleteTrainee(id: string) {
+  static async deleteTrainee(id: string, gymId: string, gymBranchId: string) {
     try {
-      await TraineeDatabase.delete(id);
+      await TraineeDatabase.delete(id, gymId, gymBranchId);
     } catch (error) {
       if (error instanceof AppError) {
         throw error;

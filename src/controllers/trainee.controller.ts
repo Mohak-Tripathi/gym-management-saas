@@ -3,37 +3,67 @@ import { Request, Response } from "express";
 import { TraineeService } from "../services/trainee.service";
 import { handleErrorResponse } from "../utils/handleErrorResponse"
 
-export class TraineeController {
-  // static async create(req: Request, res: Response) {
-  //   try {
-  //     const trainee = await TraineeService.createTrainee(req.body);
-  //     res.status(201).json({
-  //       status: "success",
-  //       data: trainee
-  //     });
-  //   } catch (err) {
-  //     handleErrorResponse(res, err);
-  //   }
-  // }
 
+
+
+export class TraineeController {
 
   static async onboard(req: Request, res: Response) {
     try {
-      const data = req.body; // contains both traineeData and traineeMembershipData
-      const result = await TraineeService.onboardTraineeWithMembership(data);
+
+      const { gymId } = req.user!;
+      if (!gymId) {
+        throw new Error("Gym ID is required");
+      }
+  
+      // Get gymBranchId from request body instead of user context
+      const { userData, traineeData,  traineeMembershipData } = req.body;
+      
+      if (!traineeData.gymBranchId) {
+        throw new Error("Gym Branch ID is required in trainer data");
+      }
+  
+      const enrichedData = {
+        userData: { 
+          ...userData, 
+          gymId,
+          gymBranchId: traineeData.gymBranchId  // Use branch ID from request
+        },
+        trainerData: { 
+          ...traineeData, 
+          gymId,
+          // gymBranchId already exists in trainerData
+        },
+        traineeMembershipData : {
+          ...traineeMembershipData,
+          gymId,
+          gymBranchId: traineeData.gymBranchId
+        }
+
+      };
+  
+      console.log("Enriched data:", enrichedData); // For debugging
+  
+
+      const result = await TraineeService.onboardTraineeWithMembership(enrichedData);
       res.status(201).json(result);
     } catch (err) {
+
       handleErrorResponse(res, err);
     }
   }
 
   static async getAll(req: Request, res: Response) {
     try {
+
       const { gymId } = req.user!;
       if (!gymId) {
         throw new Error("Gym ID is required");
       }
-      const trainees = await TraineeService.getAllTrainees(gymId);
+        // If using query parameter approach
+      const gymBranchId = req.query.gymBranchId as string;
+
+      const trainees = await TraineeService.getAllTrainees(gymId, gymBranchId);
       res.status(200).json({
         status: "success",
         data: trainees
@@ -46,11 +76,15 @@ export class TraineeController {
   static async getById(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { gymId, gymBranchId } = req.user!;
-      if (!gymId || !gymBranchId) {
-        throw new Error("Gym ID and Branch ID are required");
-      }
-      const trainee = await TraineeService.getTraineeById(id, gymId);
+      // If using query parameter approach
+    const gymBranchId = req.query.gymBranchId as string;
+
+    const { gymId } = req.user!;
+
+    if (!gymId || !gymBranchId) {
+      throw new Error("Gym ID and Branch ID are required");
+    }
+      const trainee = await TraineeService.getTraineeById(id, gymId, gymBranchId);
       res.status(200).json({
         status: "success",
         data: trainee
@@ -63,7 +97,16 @@ export class TraineeController {
   static async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const trainee = await TraineeService.updateTrainee(id, req.body);
+      // If using query parameter approach
+    const gymBranchId = req.query.gymBranchId as string;
+
+      const data = req.body;
+      const { gymId } = req.user!;
+
+      if (!gymId || !gymBranchId) {
+        throw new Error("Gym ID and Branch ID are required");
+      }
+      const trainee = await TraineeService.updateTrainee(id, data, gymId, gymBranchId);
       res.status(200).json({
         status: "success",
         data: trainee
@@ -76,7 +119,15 @@ export class TraineeController {
   static async delete(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      await TraineeService.deleteTrainee(id);
+      // If using query parameter approach
+      const gymBranchId = req.query.gymBranchId as string;
+
+      const { gymId } = req.user!;
+
+      if (!gymId || !gymBranchId) {
+        throw new Error("Gym ID and Branch ID are required");
+      }
+      await TraineeService.deleteTrainee(id, gymId, gymBranchId);
       res.status(204).json({
         status: "success",
         data: null

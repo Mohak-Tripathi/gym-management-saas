@@ -1,5 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-import { AppError } from '../utils/AppError';
+import { PrismaClient } from "@prisma/client";
+import { AppError } from "../utils/AppError";
 
 const prisma = new PrismaClient();
 
@@ -8,7 +8,7 @@ export class TrainerDB {
     try {
       return await prisma.trainer.create({ data });
     } catch (error) {
-      console.error("🔥 Trainer Create Error:", error); 
+      console.error("🔥 Trainer Create Error:", error);
       throw new AppError(
         "Error creating trainer",
         500,
@@ -17,17 +17,17 @@ export class TrainerDB {
     }
   }
 
-  static async getAll(gymId: string, gymBranchId:string) {
+  static async getAll(gymId: string, gymBranchId: string) {
     try {
       return await prisma.trainer.findMany({
         where: { gymId, gymBranchId },
         include: {
-          user:true,
+          user: true,
           certifications: true,
           trainees: true,
           workoutPlans: true,
-          trainerSalaries: true
-        }
+          trainerSalaries: true,
+        },
       });
     } catch (error) {
       throw new AppError(
@@ -38,28 +38,29 @@ export class TrainerDB {
     }
   }
 
-  static async getById(id: string, gymId: string, gymBranchId:string) {
-      try {
-        const trainer = await prisma.trainer.findFirst({  // or findUnique with compound where
-          where: { 
-            id,
-            gymId,
-            gymBranchId
-          },
-          include: {
-            certifications: true,
-            user: true,
-            trainees: true,
-            workoutPlans: true,
-            trainerSalaries: true
-          }
-        });
-    
-        if (!trainer) {
-          throw new AppError("Trainer not found", 404, "TRAINER_NOT_FOUND");
-        }
-    
-        return trainer;
+  static async getById(id: string, gymId: string, gymBranchId: string) {
+    try {
+      const trainer = await prisma.trainer.findFirst({
+        // or findUnique with compound where
+        where: {
+          id,
+          gymId,
+          gymBranchId,
+        },
+        include: {
+          certifications: true,
+          user: true,
+          trainees: true,
+          workoutPlans: true,
+          trainerSalaries: true,
+        },
+      });
+
+      if (!trainer) {
+        throw new AppError("Trainer not found", 404, "TRAINER_NOT_FOUND");
+      }
+
+      return trainer;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -72,45 +73,46 @@ export class TrainerDB {
     }
   }
 
-  static async update(id: string, data: any, gymId:string, gymBranchId: string) {
+  static async update(
+    id: string,
+    data: any,
+    gymId: string,
+    gymBranchId: string
+  ) {
     try {
-
       const existingTrainer = await prisma.trainer.findFirst({
-        where: { 
+        where: {
           id,
           gymId,
-          gymBranchId
+          gymBranchId,
         },
         include: {
           user: true,
-          trainees: true
-        }
+          trainees: true,
+        },
       });
-  
+
       if (!existingTrainer) {
-        throw new AppError("Trainer not found or unauthorized access", 404, "TRAINER_NOT_FOUND");
+        throw new AppError(
+          "Trainer not found or unauthorized access",
+          404,
+          "TRAINER_NOT_FOUND"
+        );
       }
 
-  
-  
+      const updatedTrainer = await prisma.trainer.update({
+        where: { id, gymId, gymBranchId }, // Just need id here since we already verified access
+        data: data,
+        include: {
+          user: true,
+          certifications: true,
+          trainees: true,
+          workoutPlans: true,
+          trainerSalaries: true,
+        },
+      });
 
-    const updatedTrainer = await prisma.trainer.update({
-      where: {        id,
-        gymId,
-        gymBranchId }, // Just need id here since we already verified access
-      data: data,
-      include: {
-        user: true,
-        certifications: true,
-        trainees: true,
-        workoutPlans: true,
-        trainerSalaries: true
-      }
-    });
-
-    return updatedTrainer;
-
-
+      return updatedTrainer;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -123,10 +125,10 @@ export class TrainerDB {
     }
   }
 
-  static async delete(id: string, gymId: string, gymBranchId:string) {
+  static async delete(id: string, gymId: string, gymBranchId: string) {
     try {
       const trainer = await prisma.trainer.findUnique({
-        where: { id }
+        where: { id },
       });
 
       if (!trainer) {
@@ -134,11 +136,15 @@ export class TrainerDB {
       }
 
       if (trainer.gymId !== gymId) {
-        throw new AppError("Unauthorized access to trainer", 403, "UNAUTHORIZED_ACCESS");
+        throw new AppError(
+          "Unauthorized access to trainer",
+          403,
+          "UNAUTHORIZED_ACCESS"
+        );
       }
 
       return await prisma.trainer.delete({
-        where: { id, gymId, gymBranchId }
+        where: { id, gymId, gymBranchId },
       });
     } catch (error) {
       if (error instanceof AppError) {
@@ -163,7 +169,7 @@ export class TrainerDB {
 //     try {
 //       return await prisma.trainer.create({ data });
 //     } catch (error) {
-//       console.error("🔥 Trainer Create Error:", error); 
+//       console.error("🔥 Trainer Create Error:", error);
 //       throw new AppError(
 //         "Error creating trainer",
 //         500,
