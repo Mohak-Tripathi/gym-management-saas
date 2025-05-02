@@ -27,10 +27,13 @@ export class TraineeController {
     }
   }
 
-
   static async getAll(req: Request, res: Response) {
     try {
-      const trainees = await TraineeService.getAllTrainees();
+      const { gymId } = req.user!;
+      if (!gymId) {
+        throw new Error("Gym ID is required");
+      }
+      const trainees = await TraineeService.getAllTrainees(gymId);
       res.status(200).json({
         status: "success",
         data: trainees
@@ -43,7 +46,11 @@ export class TraineeController {
   static async getById(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const trainee = await TraineeService.getTraineeById(id);
+      const { gymId, gymBranchId } = req.user!;
+      if (!gymId || !gymBranchId) {
+        throw new Error("Gym ID and Branch ID are required");
+      }
+      const trainee = await TraineeService.getTraineeById(id, gymId);
       res.status(200).json({
         status: "success",
         data: trainee

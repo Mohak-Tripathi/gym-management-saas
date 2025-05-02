@@ -16,6 +16,7 @@ export const authMiddleware: RequestHandler = (
   next: NextFunction
 ) => {
   const authHeader = req.headers.authorization;
+  console.log("Auth header:", authHeader);
   if (!authHeader){
     res.status(401).json({ error: "Missing token" })
     return
@@ -30,6 +31,7 @@ export const authMiddleware: RequestHandler = (
       return 
     }
     const decoded = jwt.verify(token, secret) as JwtPayload;
+    console.log(decoded, "decoded")
     req.user = decoded;
     next();
   } catch (err) {

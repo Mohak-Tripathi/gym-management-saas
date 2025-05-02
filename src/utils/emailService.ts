@@ -13,15 +13,24 @@
   // Using Resend
 import { Resend } from 'resend';
 
-export async function sendPasswordSetupEmail(email: string, token: string) {
-    const url = `https://yourdomain.com/set-password?token=${token}`;
+export async function sendPasswordSetupEmail(email: string, plainPassword: string) {
+    // const url = `https://yourdomain.com/set-password?token=${token}`;
     
     const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
         from: 'onboarding@resend.dev', // Can use this for testing
         to: email,
         subject: 'Welcome, Set your password',
-        html: `<p>Click <a href="${url}">here</a> to set your password.</p>`
+        html: `
+  <p>Your login credentials are as follows:</p>
+  <ul>
+    <li><strong>Email:</strong> ${email}</li>
+    <li><strong>Password:</strong> ${plainPassword}</li>
+  </ul>
+  <p>Please use these credentials to log in to your account.</p>
+  <p>For security reasons, we recommend changing your password after your first login.</p>
+`
+        // html: `<p>Click <a href="${url}">here</a> to set your password.</p>`
     });
 }
 

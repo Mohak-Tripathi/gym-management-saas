@@ -9,7 +9,7 @@ function handleErrorResponse(res, err) {
     return res.status(status).json({
         success: false,
         message,
-        errorCode,
+        errorCode
     });
 }
 exports.handleErrorResponse = handleErrorResponse;
