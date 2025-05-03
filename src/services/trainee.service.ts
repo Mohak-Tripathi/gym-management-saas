@@ -3,86 +3,92 @@ import { TraineeDatabase } from "../database/trainee.database";
 import { TraineeMembershipDatabase } from "../database/traineemembership.database";
 import { AppError } from "../utils/AppError";
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-import crypto from 'crypto';
-import { addMinutes } from 'date-fns';
+import crypto from "crypto";
+import { addMinutes } from "date-fns";
 import { sendPasswordSetupEmail } from "../utils/emailService";
+import { hashPassword } from "../utils/hashPassword";
 
 export class TraineeService {
+  static async onboardTraineeWithMembership(data: any) {
+    const {
+      userData, // contains email, password, fullName, role (should be TRAINEE), etc.
+      traineeData, // contains gender, DOB, etc.
+      traineeMembershipData, // contains membershipId, startDate, endDate, price, etc.
+    } = data;
 
-
-static async onboardTraineeWithMembership(data: any) {
-  const {
-    userData, // contains email, password, fullName, role (should be TRAINEE), etc.
-    traineeData, // contains gender, DOB, etc.
-    traineeMembershipData, // contains membershipId, startDate, endDate, price, etc.
-  } = data;
-
-  try {
-
-    if (userData.role !== 'TRAINEE') {
-        throw new AppError("Invalid user role for trainee onboarding", 400, "INVALID_ROLE");
+    try {
+      if (userData.role !== "TRAINEE") {
+        throw new AppError(
+          "Invalid user role for trainee onboarding",
+          400,
+          "INVALID_ROLE"
+        );
       }
 
-    const result = await prisma.$transaction(async (tx:any) => {
-      // 1. Create User
-      const user = await tx.user.create({
-        data: userData,
+      // Generate a secure random password
+      const plainPassword = crypto.randomBytes(12).toString("hex"); // 24 character random string
+      // Hash the password for storage
+      const hashedPassword = await hashPassword(plainPassword);
+
+      const result = await prisma.$transaction(async (tx: any) => {
+        // 1. Create User
+        const user = await tx.user.create({
+          data: {
+            ...userData,
+            password: hashedPassword, // Store hashed password
+          },
+        });
+
+        // 2. Create Trainee linked to User
+        const trainee = await tx.trainee.create({
+          data: {
+            ...traineeData,
+            userId: user.id,
+          },
+        });
+
+        // 3. Create Membership linked to Trainee
+        const fullMembershipData = {
+          ...traineeMembershipData,
+          traineeId: trainee.id,
+        };
+
+        const membership = await tx.traineeMembership.create({
+          data: fullMembershipData,
+        });
+
+        // const token = crypto.randomBytes(32).toString('hex');
+        // const expiresAt = addMinutes(new Date(), 60);
+
+        // await tx.passwordSetupToken.create({
+        //   data: { token, userId: user.id, expiresAt },
+        // });
+
+        return { user, trainee, traineeMembership: membership, plainPassword };
       });
 
-      // 2. Create Trainee linked to User
-      const trainee = await tx.trainee.create({
-        data: {
-          ...traineeData,
-          userId: user.id,
-        },
-      });
+      // ✅ Transaction complete
 
-      // 3. Create Membership linked to Trainee
-      const fullMembershipData = {
-        ...traineeMembershipData,
-        traineeId: trainee.id,
-      };
-
-      const membership = await tx.traineeMembership.create({
-        data: fullMembershipData,
-      });
-
-
-      const token = crypto.randomBytes(32).toString('hex');
-      const expiresAt = addMinutes(new Date(), 60);
-    
-      await tx.passwordSetupToken.create({
-        data: { token, userId: user.id, expiresAt },
-      });
-    
-      return { user, trainee, traineeMembership: membership, token };
-    });
-
-    // ✅ Transaction complete
-
-    // 📤 Email logic AFTER transaction
-    console.log(result, "result")
-    await sendPasswordSetupEmail(result.user.email, result.token);
-
-  } catch (error) {
-    console.error("Onboarding Error:", error);
-    throw new AppError(
-      "Error onboarding trainee with membership",
-      500,
-      "TRAINEE_ONBOARDING_ERROR"
-    );
+      // 📤 Email logic AFTER transaction
+      console.log(result, "result");
+      await sendPasswordSetupEmail(result.user.email, result.plainPassword);
+      return result;
+    } catch (error) {
+      console.error("Onboarding Error:", error);
+      throw new AppError(
+        "Error onboarding trainee with membership",
+        500,
+        "TRAINEE_ONBOARDING_ERROR"
+      );
+    }
   }
-}
 
-
-
-
-  static async getAllTrainees(gymId: string) {
+  static async getAllTrainees(gymId: string, gymBranchId: string) {
     try {
-      const trainees = await TraineeDatabase.getAll(gymId);
+      const trainees = await TraineeDatabase.getAll(gymId, gymBranchId);
       return trainees;
     } catch (error) {
       if (error instanceof AppError) {
@@ -96,9 +102,9 @@ static async onboardTraineeWithMembership(data: any) {
     }
   }
 
-  static async getTraineeById(id: string, gymId: string) {
+  static async getTraineeById(id: string, gymId: string, gymBranchId: string) {
     try {
-      const trainee = await TraineeDatabase.getById(id, gymId);
+      const trainee = await TraineeDatabase.getById(id, gymId, gymBranchId);
       if (!trainee) {
         throw new AppError(
           "Trainee not found",
@@ -119,9 +125,19 @@ static async onboardTraineeWithMembership(data: any) {
     }
   }
 
-  static async updateTrainee(id: string, data: any) {
+  static async updateTrainee(
+    id: string,
+    data: any,
+    gymId: string,
+    gymBranchId: string
+  ) {
     try {
-      const trainee = await TraineeDatabase.update(id, data);
+      const trainee = await TraineeDatabase.update(
+        id,
+        data,
+        gymId,
+        gymBranchId
+      );
       return trainee;
     } catch (error) {
       if (error instanceof AppError) {
@@ -135,9 +151,55 @@ static async onboardTraineeWithMembership(data: any) {
     }
   }
 
-  static async deleteTrainee(id: string) {
+  // static async deleteTrainee(id: string, gymId: string, gymBranchId: string) {
+  //   try {
+  //     await TraineeDatabase.delete(id, gymId, gymBranchId);
+  //   } catch (error) {
+  //     if (error instanceof AppError) {
+  //       throw error;
+  //     }
+  //     throw new AppError(
+  //       `Error deleting trainee with ID: ${id}`,
+  //       500,
+  //       "TRAINEE_SERVICE_DELETE_ERROR"
+  //     );
+  //   }
+  // }
+
+  static async deleteTrainee(id: string, gymId: string, gymBranchId: string) {
     try {
-      await TraineeDatabase.delete(id);
+      const trainee = await prisma.trainee.findFirst({
+        where: {
+          id,
+          gymId,
+          gymBranchId,
+        },
+        include: {
+          user: true, // assuming `Trainee` has a relation to `User`
+        },
+      });
+
+      if (!trainee) {
+        throw new AppError("Trainee not found", 404, "TRAINEE_NOT_FOUND");
+      }
+
+      await prisma.$transaction([
+        prisma.traineeMembership.deleteMany({
+          where: { traineeId: id },
+        }),
+        prisma.trainee.delete({
+          where: { id },
+        }),
+        prisma.user.delete({
+          where: { id: trainee.userId },
+        }),
+      ]);
+
+      return {
+        message: "Trainee deleted successfully",
+        traineeId: id,
+        userId: trainee.userId,
+      };
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -151,28 +213,25 @@ static async onboardTraineeWithMembership(data: any) {
   }
 }
 
+//   static async createTrainee(data: any) {
+//     try {
+//       const trainee = await TraineeDatabase.create(data);
+//       return trainee;
+//     } catch (error) {
+//       if (error instanceof AppError) {
+//         throw error;
+//       }
+//       throw new AppError(
+//         "Error creating trainee",
+//         500,
+//         "TRAINEE_SERVICE_CREATE_ERROR"
+//       );
+//     }
+//   }
 
+//createTrainee got extended
 
-
-  //   static async createTrainee(data: any) {
-  //     try {
-  //       const trainee = await TraineeDatabase.create(data);
-  //       return trainee;
-  //     } catch (error) {
-  //       if (error instanceof AppError) {
-  //         throw error;
-  //       }
-  //       throw new AppError(
-  //         "Error creating trainee",
-  //         500,
-  //         "TRAINEE_SERVICE_CREATE_ERROR"
-  //       );
-  //     }
-  //   }
-
-  //createTrainee got extended
-
-  //Wrap this is Transactions later TODO - Use Prisma Transactions.
+//Wrap this is Transactions later TODO - Use Prisma Transactions.
 
 //   static async onboardTraineeWithMembership(data: any) {
 //     const {

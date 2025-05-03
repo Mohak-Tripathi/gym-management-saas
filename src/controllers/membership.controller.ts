@@ -121,7 +121,6 @@
 //   }
 // }
 
-
 // import { Request, Response, RequestHandler } from "express";
 // import { MembershipService } from "../services/membership.service";
 // import { handleErrorResponse } from "../utils/handleErrorResponse";
@@ -187,59 +186,66 @@
 //   }
 // }
 
-
-
 import { Request, Response, RequestHandler } from "express";
 import { MembershipService } from "../services/membership.service";
- import { handleErrorResponse } from "../utils/handleErrorResponse";
-
+import { handleErrorResponse } from "../utils/handleErrorResponse";
 
 export class MembershipController {
   static create: RequestHandler = async (req: Request, res: Response) => {
     try {
       const data = req.body;
-      const { gymId, gymBranchId } = req.user!; // Get both gymId and branchId from authenticated user
-      
-      if (!gymId || !gymBranchId) {
+      const { gymId } = req.user!; // Get both gymId and branchId from authenticated user
+
+      if (!gymId) {
         throw new Error("Gym ID and Branch ID are required");
       }
 
       const membership = await MembershipService.createMembership({
         ...data,
-        gymId,
-        branchId: gymBranchId
+        gymId
       });
       res.status(201).json(membership);
     } catch (err) {
       handleErrorResponse(res, err);
     }
-  }
+  };
 
   static getAll: RequestHandler = async (req: Request, res: Response) => {
     try {
-      const { gymId, gymBranchId } = req.user!;
-      
-      if (!gymId || !gymBranchId) {
-        throw new Error("Gym ID and Branch ID are required");
+      const { gymId } = req.user!;
+      if (!gymId) {
+        throw new Error("Gym ID is required");
       }
+      // If using query parameter approach
+      const gymBranchId = req.query.gymBranchId as string;
 
-      const memberships = await MembershipService.getMemberships(gymId, gymBranchId);
+      const memberships = await MembershipService.getMemberships(
+        gymId,
+        gymBranchId
+      );
       res.json(memberships);
     } catch (err) {
       handleErrorResponse(res, err);
     }
-  }
+  };
 
   static getById: RequestHandler = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { gymId, gymBranchId } = req.user!;
+
+      const gymBranchId = req.query.gymBranchId as string;
+
+      const { gymId } = req.user!;
 
       if (!gymId || !gymBranchId) {
         throw new Error("Gym ID and Branch ID are required");
       }
 
-      const membership = await MembershipService.getMembershipById(id, gymId, gymBranchId);
+      const membership = await MembershipService.getMembershipById(
+        id,
+        gymId,
+        gymBranchId
+      );
 
       if (!membership) {
         res.status(404).json({
@@ -253,29 +259,40 @@ export class MembershipController {
     } catch (err) {
       handleErrorResponse(res, err);
     }
-  }
+  };
 
   static update: RequestHandler = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
-      const { gymId, gymBranchId } = req.user!;
+
+      const gymBranchId = req.query.gymBranchId as string;
+
+      const { gymId } = req.user!;
 
       if (!gymId || !gymBranchId) {
         throw new Error("Gym ID and Branch ID are required");
       }
 
-      const membership = await MembershipService.updateMembership(id, data, gymId, gymBranchId);
+      const membership = await MembershipService.updateMembership(
+        id,
+        data,
+        gymId,
+        gymBranchId
+      );
       res.json(membership);
     } catch (err) {
       handleErrorResponse(res, err);
     }
-  }
+  };
 
   static delete: RequestHandler = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { gymId, gymBranchId } = req.user!;
+
+      const gymBranchId = req.query.gymBranchId as string;
+
+      const { gymId } = req.user!;
 
       if (!gymId || !gymBranchId) {
         throw new Error("Gym ID and Branch ID are required");
@@ -286,5 +303,5 @@ export class MembershipController {
     } catch (err) {
       handleErrorResponse(res, err);
     }
-  }
+  };
 }
