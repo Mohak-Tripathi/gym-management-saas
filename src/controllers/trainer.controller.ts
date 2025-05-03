@@ -75,6 +75,7 @@ export const TrainerController = {
 
   async getAll(req: Request, res: Response) {
     try {
+      
       const { gymId } = req.user!;
       if (!gymId) {
         throw new Error("Gym ID is required");
@@ -96,8 +97,7 @@ export const TrainerController = {
     try {
       const { id } = req.params;
       // If using query parameter approach
-      const gymBranchId = req.query.gymBranchId as string;
-
+      const gymBranchId = req.query.gymBranchId as string;      
       const { gymId } = req.user!;
 
       if (!gymId || !gymBranchId) {
@@ -163,10 +163,10 @@ export const TrainerController = {
       if (!gymId || !gymBranchId) {
         throw new Error("Gym ID and Branch ID are required");
       }
-      await TrainerService.deleteTrainer(id, gymId, gymBranchId);
-      res.status(204).json({
+      const result  = await TrainerService.deleteTrainer(id, gymId, gymBranchId);
+      res.status(200).json({
         status: "success",
-        data: null,
+        result
       });
     } catch (err) {
       handleErrorResponse(res, err);

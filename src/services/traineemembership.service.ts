@@ -17,9 +17,9 @@ export class TraineeMembershipService {
 //     }
 //   }
 
-  static async getAllTraineeMemberships() {
+  static async getAllTraineeMemberships(gymId: string, gymBranchId: string) {
     try {
-      return await TraineeMembershipDatabase.getAll();
+      return await TraineeMembershipDatabase.getAll(gymId, gymBranchId);
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -32,9 +32,9 @@ export class TraineeMembershipService {
     }
   }
 
-  static async getTraineeMembershipById(id: string) {
+  static async getTraineeMembershipById(id: string, gymId: string, gymBranchId: string) {
     try {
-      return await TraineeMembershipDatabase.getById(id);
+      return await TraineeMembershipDatabase.getById(id, gymId, gymBranchId);
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -47,9 +47,16 @@ export class TraineeMembershipService {
     }
   }
 
-  static async updateTraineeMembership(id: string, data: unknown) {
+  static async updateTraineeMembership(   
+    id: string,
+    data: any,
+    gymId: string,
+    gymBranchId: string) {
     try {
-      return await TraineeMembershipDatabase.update(id, data);
+      return await TraineeMembershipDatabase.update(      id,
+        data,
+        gymId,
+        gymBranchId);
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -62,9 +69,9 @@ export class TraineeMembershipService {
     }
   }
 
-  static async deleteTraineeMembership(id: string) {
+  static async deleteTraineeMembership(id: string, gymId: string, gymBranchId: string) {
     try {
-      return await TraineeMembershipDatabase.delete(id);
+      return await TraineeMembershipDatabase.delete(id, gymId, gymBranchId);
     } catch (error) {
       if (error instanceof AppError) {
         throw error;

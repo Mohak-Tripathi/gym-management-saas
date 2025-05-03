@@ -101,7 +101,7 @@ export class TrainerDB {
       }
 
       const updatedTrainer = await prisma.trainer.update({
-        where: { id, gymId, gymBranchId }, // Just need id here since we already verified access
+        where: { id }, // Just need id here since we already verified access
         data: data,
         include: {
           user: true,
@@ -125,38 +125,38 @@ export class TrainerDB {
     }
   }
 
-  static async delete(id: string, gymId: string, gymBranchId: string) {
-    try {
-      const trainer = await prisma.trainer.findUnique({
-        where: { id },
-      });
+  // static async delete(id: string, gymId: string, gymBranchId: string) {
+  //   try {
+  //     const trainer = await prisma.trainer.findUnique({
+  //       where: { id },
+  //     });
 
-      if (!trainer) {
-        throw new AppError("Trainer not found", 404, "TRAINER_NOT_FOUND");
-      }
+  //     if (!trainer) {
+  //       throw new AppError("Trainer not found", 404, "TRAINER_NOT_FOUND");
+  //     }
 
-      if (trainer.gymId !== gymId) {
-        throw new AppError(
-          "Unauthorized access to trainer",
-          403,
-          "UNAUTHORIZED_ACCESS"
-        );
-      }
+  //     if (trainer.gymId !== gymId) {
+  //       throw new AppError(
+  //         "Unauthorized access to trainer",
+  //         403,
+  //         "UNAUTHORIZED_ACCESS"
+  //       );
+  //     }
 
-      return await prisma.trainer.delete({
-        where: { id, gymId, gymBranchId },
-      });
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      throw new AppError(
-        "Error deleting trainer",
-        500,
-        "TRAINER_DB_DELETE_ERROR"
-      );
-    }
-  }
+  //     return await prisma.trainer.delete({
+  //       where: { id, gymId, gymBranchId },
+  //     });
+  //   } catch (error) {
+  //     if (error instanceof AppError) {
+  //       throw error;
+  //     }
+  //     throw new AppError(
+  //       "Error deleting trainer",
+  //       500,
+  //       "TRAINER_DB_DELETE_ERROR"
+  //     );
+  //   }
+  // }
 }
 
 // import { PrismaClient } from '@prisma/client';

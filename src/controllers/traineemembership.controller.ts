@@ -18,7 +18,16 @@ export class TraineeMembershipController {
 
   static async getAll(req: Request, res: Response) {
     try {
-      const traineeMemberships = await TraineeMembershipService.getAllTraineeMemberships();
+
+      const { gymId } = req.user!;
+      if (!gymId) {
+        throw new Error("Gym ID is required");
+      }
+      // If using query parameter approach
+      const gymBranchId = req.query.gymBranchId as string;
+
+      const traineeMemberships = await TraineeMembershipService.getAllTraineeMemberships(gymId, gymBranchId);
+      
       res.status(200).json({
         status: "success",
         data: traineeMemberships
@@ -30,8 +39,19 @@ export class TraineeMembershipController {
 
   static async getById(req: Request, res: Response) {
     try {
+
+
       const { id } = req.params;
-      const traineeMembership = await TraineeMembershipService.getTraineeMembershipById(id);
+      // If using query parameter approach
+      const gymBranchId = req.query.gymBranchId as string;
+
+      const { gymId } = req.user!;
+
+      if (!gymId || !gymBranchId) {
+        throw new Error("Gym ID and Branch ID are required");
+      }
+
+      const traineeMembership = await TraineeMembershipService.getTraineeMembershipById(id, gymId, gymBranchId);
       res.status(200).json({
         status: "success",
         data: traineeMembership
@@ -43,8 +63,25 @@ export class TraineeMembershipController {
 
   static async update(req: Request, res: Response) {
     try {
+
+
       const { id } = req.params;
-      const traineeMembership = await TraineeMembershipService.updateTraineeMembership(id, req.body);
+      // If using query parameter approach
+      const gymBranchId = req.query.gymBranchId as string;
+
+      const data = req.body;
+      const { gymId } = req.user!;
+
+      if (!gymId || !gymBranchId) {
+        throw new Error("Gym ID and Branch ID are required");
+      }
+
+      const traineeMembership = await TraineeMembershipService.updateTraineeMembership(
+        id,
+        data,
+        gymId,
+        gymBranchId
+      );
       res.status(200).json({
         status: "success",
         data: traineeMembership
@@ -56,8 +93,18 @@ export class TraineeMembershipController {
 
   static async delete(req: Request, res: Response) {
     try {
+
       const { id } = req.params;
-      await TraineeMembershipService.deleteTraineeMembership(id);
+      // If using query parameter approach
+      const gymBranchId = req.query.gymBranchId as string;
+
+      const { gymId } = req.user!;
+
+      if (!gymId || !gymBranchId) {
+        throw new Error("Gym ID and Branch ID are required");
+      }
+
+      await TraineeMembershipService.deleteTraineeMembership(id, gymId, gymBranchId);
       res.status(204).json({
         status: "success",
         data: null

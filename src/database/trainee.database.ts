@@ -22,7 +22,8 @@ export class TraineeDatabase {
       return await prisma.trainee.findMany({
         where: { gymId, gymBranchId },
         include: {
-          // membership: true,
+
+          traineeMemberships:true,
           trainer: true,
           user: true,
         },
@@ -45,6 +46,7 @@ export class TraineeDatabase {
           gymBranchId,
         },
         include: {
+          traineeMemberships:true,
           // membership: true,
           user: true,
           trainer: true,
@@ -82,6 +84,7 @@ export class TraineeDatabase {
         },
         include: {
           user: true,
+          traineeMemberships:true,
         },
       });
 
@@ -115,34 +118,34 @@ export class TraineeDatabase {
     }
   }
 
-  static async delete(id: string, gymId: string, gymBranchId: string) {
-    try {
-      const trainee = await prisma.trainee.findUnique({
-        where: { id },
-      });
+  // static async delete(id: string, gymId: string, gymBranchId: string) {
+  //   try {
+  //     const trainee = await prisma.trainee.findUnique({
+  //       where: { id },
+  //     });
 
-      if (!trainee) {
-        throw new AppError("Trainee not found", 404, "TRAINEE_NOT_FOUND");
-      }
+  //     if (!trainee) {
+  //       throw new AppError("Trainee not found", 404, "TRAINEE_NOT_FOUND");
+  //     }
 
-      if (trainee.gymId !== gymId) {
-        throw new AppError(
-          "Unauthorized access to trainee",
-          403,
-          "UNAUTHORIZED_ACCESS"
-        );
-      }
+  //     if (trainee.gymId !== gymId) {
+  //       throw new AppError(
+  //         "Unauthorized access to trainee",
+  //         403,
+  //         "UNAUTHORIZED_ACCESS"
+  //       );
+  //     }
 
-      return await prisma.trainee.delete({
-        where: { id, gymId, gymBranchId },
-      });
-      // return await prisma.trainee.delete({ where: { id } });
-    } catch (error) {
-      throw new AppError(
-        `Error deleting trainee with ID: ${id}`,
-        500,
-        "TRAINEE_DB_DELETE_ERROR"
-      );
-    }
-  }
+  //     return await prisma.trainee.delete({
+  //       where: { id, gymId, gymBranchId },
+  //     });
+  //     // return await prisma.trainee.delete({ where: { id } });
+  //   } catch (error) {
+  //     throw new AppError(
+  //       `Error deleting trainee with ID: ${id}`,
+  //       500,
+  //       "TRAINEE_DB_DELETE_ERROR"
+  //     );
+  //   }
+  // }
 }

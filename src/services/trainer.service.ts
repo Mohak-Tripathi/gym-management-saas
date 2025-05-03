@@ -148,20 +148,20 @@ export class TrainerService {
     }
   }
 
-  static async deleteTrainer(id: string, gymId: string, gymBranchId: string) {
-    try {
-      return await TrainerDB.delete(id, gymId, gymBranchId);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      throw new AppError(
-        `Error deleting trainer with ID: ${id}`,
-        500,
-        "TRAINER_SERVICE_DELETE_ERROR"
-      );
-    }
-  }
+  // static async deleteTrainer(id: string, gymId: string, gymBranchId: string) {
+  //   try {
+  //     return await TrainerDB.delete(id, gymId, gymBranchId);
+  //   } catch (error) {
+  //     if (error instanceof AppError) {
+  //       throw error;
+  //     }
+  //     throw new AppError(
+  //       `Error deleting trainer with ID: ${id}`,
+  //       500,
+  //       "TRAINER_SERVICE_DELETE_ERROR"
+  //     );
+  //   }
+  // }
 
   // static async getAllTrainers() {
   //   try {
@@ -202,35 +202,54 @@ export class TrainerService {
   //   }
   // }
 
-  // static async updateTrainer(id: string, data: unknown) {
-  //   try {
-  //     const trainer = await TrainerDB.update(id, data);
-  //     return trainer;
-  //   } catch (error) {
-  //     if (error instanceof AppError) {
-  //       throw error;
-  //     }
-  //     throw new AppError(
-  //       `Error updating trainer with ID: ${id}`,
-  //       500,
-  //       "TRAINER_SERVICE_UPDATE_ERROR"
-  //     );
-  //   }
-  // }
 
-  // static async deleteTrainer(id: string) {
-  //   try {
-  //     const trainer = await TrainerDB.delete(id);
-  //     return trainer;
-  //   } catch (error) {
-  //     if (error instanceof AppError) {
-  //       throw error;
-  //     }
-  //     throw new AppError(
-  //       `Error deleting trainer with ID: ${id}`,
-  //       500,
-  //       "TRAINER_SERVICE_DELETE_ERROR"
-  //     );
-  //   }
-  // }
+
+  static async deleteTrainer(id: string, gymId: string, gymBranchId: string) {
+    try {
+      // 1. Fetch the trainer and associated user
+      const trainer = await prisma.trainer.findFirst({
+        where: {
+          id,
+          gymId,
+          gymBranchId
+        },
+        include: {
+          user: true
+        }
+      });
+  
+      if (!trainer) {
+        throw new AppError("Trainer not found", 404, "TRAINER_NOT_FOUND");
+      }
+  
+      // 2. Transactional delete
+      await prisma.$transaction([
+        prisma.trainer.delete({
+          where: { id }
+        }),
+        prisma.user.delete({
+          where: { id: trainer.userId }
+        })
+      ]);
+  
+      // 3. Return success data
+      return {
+        message: "Trainer deleted successfully",
+        trainerId: id,
+        userId: trainer.userId
+      };
+  
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+  
+      throw new AppError(
+        `Error deleting trainer with ID: ${id}`,
+        500,
+        "TRAINER_SERVICE_DELETE_ERROR"
+      );
+    }
+  }
+  
+
+
 }

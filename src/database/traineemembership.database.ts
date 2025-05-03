@@ -1,4 +1,3 @@
-
 import { PrismaClient } from "@prisma/client";
 import { AppError } from "../utils/AppError";
 
@@ -7,12 +6,13 @@ const prisma = new PrismaClient();
 export class TraineeMembershipDatabase {
   static async create(data: any) {
     try {
-      return await prisma.traineeMembership.create({ data, 
+      return await prisma.traineeMembership.create({
+        data,
         include: {
-            trainee: true,
-            membership: true,
-          },
-       });
+          trainee: true,
+          membership: true,
+        },
+      });
     } catch (error) {
       throw new AppError(
         "Error creating trainee membership",
@@ -22,10 +22,11 @@ export class TraineeMembershipDatabase {
     }
   }
 
-  static async getAll() {
+  static async getAll(gymId: string, gymBranchId: string) {
     try {
-    //   return await prisma.traineeMembership.findMany();
+      //   return await prisma.traineeMembership.findMany();
       return await prisma.traineeMembership.findMany({
+        where: { gymId, gymBranchId },
         include: {
           trainee: true,
           membership: true,
@@ -40,16 +41,29 @@ export class TraineeMembershipDatabase {
     }
   }
 
-  static async getById(id: string) {
+  static async getById(id: string, gymId: string, gymBranchId: string) {
     try {
-    //   return await prisma.traineeMembership.findUnique({ where: { id } });
-      return await prisma.traineeMembership.findUnique({
-        where: { id },
+      //   return await prisma.traineeMembership.findUnique({ where: { id } });
+      const traineeMembership = await prisma.traineeMembership.findUnique({
+        where: {
+          id,
+          gymId,
+          gymBranchId,
+        },
         include: {
           trainee: true,
           membership: true,
         },
       });
+
+      if (!traineeMembership) {
+        throw new AppError(
+          "TraineeMembership not found",
+          404,
+          "TRAINEE_MEMBERSHIP_NOT_FOUND"
+        );
+      }
+      return traineeMembership;
     } catch (error) {
       throw new AppError(
         `Error fetching trainee membership with ID: ${id}`,
@@ -59,11 +73,36 @@ export class TraineeMembershipDatabase {
     }
   }
 
-  static async update(id: string, data: any) {
+  static async update(
+    id: string,
+    data: any,
+    gymId: string,
+    gymBranchId: string
+  ) {
     try {
-    
+      const existingTraineeMembership =
+        await prisma.traineeMembership.findFirst({
+          where: {
+            id,
+            gymId,
+            gymBranchId,
+          },
+        });
+
+      if (!existingTraineeMembership) {
+        throw new AppError(
+          "TraineeMembership not found or unauthorized access",
+          404,
+          "TRAINEE_MEMBERSHIP_NOT_FOUND"
+        );
+      }
+
       return await prisma.traineeMembership.update({
-        where: { id },
+        where: {
+          id,
+          // gymId,
+          // gymBranchId,
+        },
         data,
         include: {
           trainee: true,
@@ -79,9 +118,30 @@ export class TraineeMembershipDatabase {
     }
   }
 
-  static async delete(id: string) {
+  static async delete(id: string, gymId: string, gymBranchId: string) {
     try {
-      return await prisma.traineeMembership.delete({ where: { id } });
+
+      // Optimisation tip => use only id as it is primary key so fater queryObjects, then check gymid of that record for authentication
+      const existingTraineeMembership =
+        await prisma.traineeMembership.findFirst({
+          where: {
+            id,
+            gymId,
+            gymBranchId,
+          },
+        });
+
+      if (!existingTraineeMembership) {
+        throw new AppError(
+          "TraineeMembership not found or unauthorized access",
+          404,
+          "TRAINER_MEMBERSHIP_NOT_FOUND"
+        );
+      }
+
+      return await prisma.traineeMembership.delete({
+        where: { id},
+      });
     } catch (error) {
       throw new AppError(
         `Error deleting trainee membership with ID: ${id}`,

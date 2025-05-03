@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export class MembershipDatabase {
   static async create(data: any) {
     try {
-      if (!data.gymId || !data.branchId) {
+      if (!data.gymId || !data.gymBranchId) {
         throw new AppError(
           "Gym ID and Branch ID are required",
           400,
@@ -84,7 +84,7 @@ export class MembershipDatabase {
 
   static async update(id: string, data: any) {
     try {
-      if (!data.gymId || !data.branchId) {
+      if (!data.gymId || !data.gymBranchId) {
         throw new AppError(
           "Gym ID and Branch ID are required",
           400,
@@ -95,7 +95,7 @@ export class MembershipDatabase {
         where: { 
           id,
           gymId: data.gymId,
-          gymBranchId:data.branchId
+          gymBranchId:data.gymBranchId
  
         },
         data
