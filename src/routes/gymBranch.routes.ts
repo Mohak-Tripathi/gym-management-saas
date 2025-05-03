@@ -13,6 +13,8 @@ router.delete('/:id', authorize(UserRole.SUPERADMIN), GymBranchController.delete
 
 // SuperAdmin and Admin can view and update
 router.get('/', authorize(UserRole.SUPERADMIN), GymBranchController.getAll);
+
+
 router.get('/:id', authorize(UserRole.SUPERADMIN, UserRole.ADMIN), GymBranchController.getById);
 router.put('/:id', authorize(UserRole.SUPERADMIN, UserRole.ADMIN), GymBranchController.update);
 
