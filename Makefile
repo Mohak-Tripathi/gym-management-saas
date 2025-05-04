@@ -34,7 +34,13 @@ devbuild:
 dev: 
 	docker-compose up 
 
-create-superadmin:
+create-superadmin-ts:
 	docker-compose exec backend sh -c "npx ts-node src/scripts/createSuperAdminAndGym.ts"
+
+create-superadmin-js:
+	docker-compose exec backend sh -c "node dist/scripts/createSuperAdminAndGym.js"
+
+prodrender:
+	docker-compose -f docker-compose.prod.yaml up --build
 
 
