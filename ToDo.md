@@ -208,3 +208,24 @@ For your API implementation, you should:
   Implement middleware that validates tenant access
   Ensure all queries and mutations are scoped to the correct tenant
 Security consid
+
+
+
+
+
+
+
+
+
+
+
+Some Useful Info 
+Render DB info 
+1. Hostname=dpg-d0bdgu15pdvs73citddg-a
+2. HOST=5432
+3. Database=gym_db_o3ou
+4. Username=gym_db_o3ou_user
+5. Password=2MAmkBhHQv17lFZNSDwKn7pHNgFFqZfb
+6. Internal Database URL=postgresql://gym_db_o3ou_user:2MAmkBhHQv17lFZNSDwKn7pHNgFFqZfb@dpg-d0bdgu15pdvs73citddg-a/gym_db_o3ou
+7. External Database URL=postgresql://gym_db_o3ou_user:2MAmkBhHQv17lFZNSDwKn7pHNgFFqZfb@dpg-d0bdgu15pdvs73citddg-a.singapore-postgres.render.com/gym_db_o3ou
+8. PSQL Command=PGPASSWORD=2MAmkBhHQv17lFZNSDwKn7pHNgFFqZfb psql -h dpg-d0bdgu15pdvs73citddg-a.singapore-postgres.render.com -U gym_db_o3ou_user gym_db_o3ou
