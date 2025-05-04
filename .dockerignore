@@ -1,4 +1,10 @@
 # .dockerignore
-dist
-node_modules
+
 .env
+.env.prod
+node_modules
+dist
+Dockerfile*
+*.md
+Makefile
+docker-compose*.yaml

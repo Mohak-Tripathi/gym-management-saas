@@ -208,3 +208,12 @@ For your API implementation, you should:
   Implement middleware that validates tenant access
   Ensure all queries and mutations are scoped to the correct tenant
 Security consid
+
+
+
+
+
+
+
+
+
