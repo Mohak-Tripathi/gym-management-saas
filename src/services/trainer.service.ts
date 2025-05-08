@@ -202,46 +202,45 @@ export class TrainerService {
   //   }
   // }
 
-
-
   static async deleteTrainer(id: string, gymId: string, gymBranchId: string) {
     try {
       // 1. Fetch the trainer and associated user
-      const trainer = await prisma.trainer.findFirst({
-        where: {
-          id,
-          gymId,
-          gymBranchId
-        },
-        include: {
-          user: true
-        }
-      });
-  
+      // const trainer = await prisma.trainer.findFirst({
+      //   where: {
+      //     id,
+      //   },
+      // });
+      const trainer = await prisma.trainer.findUnique({ where: { id } });
+
       if (!trainer) {
         throw new AppError("Trainer not found", 404, "TRAINER_NOT_FOUND");
       }
-  
+      console.log(trainer,  gymId, gymBranchId, "trainerr")
+
+      // Step 2: Explicitly check tenant scoping
+      if (trainer.gymId !== gymId || trainer.gymBranchId !== gymBranchId) {
+        throw new AppError("Unauthorized access", 403, "UNAUTHORIZED_ACCESS");
+      }
+
       // 2. Transactional delete
       await prisma.$transaction([
         prisma.trainer.delete({
-          where: { id }
+          where: { id },
         }),
         prisma.user.delete({
-          where: { id: trainer.userId }
-        })
+          where: { id: trainer.userId },
+        }),
       ]);
-  
+
       // 3. Return success data
       return {
         message: "Trainer deleted successfully",
         trainerId: id,
-        userId: trainer.userId
+        userId: trainer.userId,
       };
-  
     } catch (error) {
       if (error instanceof AppError) throw error;
-  
+
       throw new AppError(
         `Error deleting trainer with ID: ${id}`,
         500,
@@ -249,7 +248,4 @@ export class TrainerService {
       );
     }
   }
-  
-
-
 }
