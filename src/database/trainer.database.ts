@@ -73,57 +73,118 @@ export class TrainerDB {
     }
   }
 
-  static async update(
-    id: string,
-    data: any,
-    gymId: string,
-    gymBranchId: string
-  ) {
+  // static async update(
+  //   id: string,
+  //   data: any,
+  //   gymId: string,
+  //   gymBranchId: string
+  // ) {
+  //   try {
+  //     const existingTrainer = await prisma.trainer.findFirst({
+  //       where: {
+  //         id,
+  //         gymId,
+  //         gymBranchId,
+  //       },
+  //       include: {
+  //         user: true,
+  //         trainees: true,
+  //       },
+  //     });
+
+  //     if (!existingTrainer) {
+  //       throw new AppError(
+  //         "Trainer not found or unauthorized access",
+  //         404,
+  //         "TRAINER_NOT_FOUND"
+  //       );
+  //     }
+
+  //     const updatedTrainer = await prisma.trainer.update({
+  //       where: { id }, // Just need id here since we already verified access
+  //       data: data,
+  //       include: {
+  //         user: true,
+  //         certifications: true,
+  //         trainees: true,
+  //         workoutPlans: true,
+  //         trainerSalaries: true,
+  //       },
+  //     });
+
+  //     return updatedTrainer;
+  //   } catch (error) {
+  //     if (error instanceof AppError) {
+  //       throw error;
+  //     }
+  //     throw new AppError(
+  //       "Error updating trainer",
+  //       500,
+  //       "TRAINER_DB_UPDATE_ERROR"
+  //     );
+  //   }
+  // }
+
+
+
+  static async update(id: string, data: any, gymId: string, gymBranchId: string) {
+    const { userData, trainerData } = data;
+  
     try {
-      const existingTrainer = await prisma.trainer.findFirst({
-        where: {
-          id,
-          gymId,
-          gymBranchId,
-        },
-        include: {
-          user: true,
-          trainees: true,
-        },
+      console.log(userData, trainerData, gymId, gymBranchId, "helo")
+      return await prisma.$transaction(async (tx) => {
+        const existingTrainer = await tx.trainer.findFirst({
+          where: {
+            id
+          },
+          include: {
+            user: true,
+          },
+        });
+  
+        console.log(existingTrainer, "existing trainer")
+        if (!existingTrainer) {
+          throw new AppError(
+            "Trainer not found or unauthorized access",
+            404,
+            "TRAINER_NOT_FOUND"
+          );
+        }
+  
+        // 1. Update User (only if userData exists)
+        if (userData) {
+          await tx.user.update({
+            where: { id: existingTrainer.userId },
+            data: userData,
+          });
+        }
+  
+        // 2. Update Trainer
+        const updatedTrainer = await tx.trainer.update({
+          where: { id },
+          data: trainerData,
+          include: {
+            user: true,
+            certifications: true,
+            trainees: true,
+            workoutPlans: true,
+            trainerSalaries: true,
+          },
+        });
+  
+        return updatedTrainer;
       });
-
-      if (!existingTrainer) {
-        throw new AppError(
-          "Trainer not found or unauthorized access",
-          404,
-          "TRAINER_NOT_FOUND"
-        );
-      }
-
-      const updatedTrainer = await prisma.trainer.update({
-        where: { id }, // Just need id here since we already verified access
-        data: data,
-        include: {
-          user: true,
-          certifications: true,
-          trainees: true,
-          workoutPlans: true,
-          trainerSalaries: true,
-        },
-      });
-
-      return updatedTrainer;
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
+  
       throw new AppError(
-        "Error updating trainer",
+        "Error updating trainer and user",
         500,
         "TRAINER_DB_UPDATE_ERROR"
       );
     }
   }
+  
 
   // static async delete(id: string, gymId: string, gymBranchId: string) {
   //   try {

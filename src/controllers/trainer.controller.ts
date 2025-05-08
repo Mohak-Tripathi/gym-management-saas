@@ -75,7 +75,6 @@ export const TrainerController = {
 
   async getAll(req: Request, res: Response) {
     try {
-      
       const { gymId } = req.user!;
       if (!gymId) {
         throw new Error("Gym ID is required");
@@ -97,7 +96,7 @@ export const TrainerController = {
     try {
       const { id } = req.params;
       // If using query parameter approach
-      const gymBranchId = req.query.gymBranchId as string;      
+      const gymBranchId = req.query.gymBranchId as string;
       const { gymId } = req.user!;
 
       if (!gymId || !gymBranchId) {
@@ -125,24 +124,58 @@ export const TrainerController = {
     }
   },
 
+  // async update(req: Request, res: Response) {
+  //   try {
+  //     const { id } = req.params;
+  //     // If using query parameter approach
+  //     const gymBranchId = req.query.gymBranchId as string;
+
+  //     const data = req.body;
+  //     const { gymId } = req.user!;
+
+  //     if (!gymId || !gymBranchId) {
+  //       throw new Error("Gym ID and Branch ID are required");
+  //     }
+  //     const trainer = await TrainerService.updateTrainer(
+  //       id,
+  //       data,
+  //       gymId,
+  //       gymBranchId
+  //     );
+  //     res.status(200).json({
+  //       status: "success",
+  //       data: trainer,
+  //     });
+  //   } catch (err) {
+  //     handleErrorResponse(res, err);
+  //   }
+  // },
+
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      // If using query parameter approach
-      const gymBranchId = req.query.gymBranchId as string;
-
-      const data = req.body;
+      const { userData, trainerData } = req.body;
       const { gymId } = req.user!;
+      const gymBranchId = req.query.gymBranchId as string;
 
       if (!gymId || !gymBranchId) {
         throw new Error("Gym ID and Branch ID are required");
       }
+
+      const enrichedData = {
+        userData: userData ? { ...userData, gymId, gymBranchId } : undefined,
+        trainerData: trainerData
+          ? { ...trainerData, gymId, gymBranchId }
+          : undefined,
+      };
+
       const trainer = await TrainerService.updateTrainer(
         id,
-        data,
+        enrichedData,
         gymId,
         gymBranchId
       );
+
       res.status(200).json({
         status: "success",
         data: trainer,
@@ -163,10 +196,10 @@ export const TrainerController = {
       if (!gymId || !gymBranchId) {
         throw new Error("Gym ID and Branch ID are required");
       }
-      const result  = await TrainerService.deleteTrainer(id, gymId, gymBranchId);
+      const result = await TrainerService.deleteTrainer(id, gymId, gymBranchId);
       res.status(200).json({
         status: "success",
-        result
+        result,
       });
     } catch (err) {
       handleErrorResponse(res, err);

@@ -7,6 +7,7 @@ const prisma = new PrismaClient();
 
 export class GymBranchDatabase {
   static async create(data: any) {
+    console.log(data, "data-gymbranch-create")
     try {
       return await prisma.gymBranch.create({ data });
     } catch (error) {

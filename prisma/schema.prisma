@@ -93,6 +93,7 @@ model GymBranch {
   id           String     @id @default(uuid())
   name         String
   address      String
+  description  String?
   isMainBranch Boolean    @default(false)
   
   // Tenant relation
@@ -216,6 +217,7 @@ model Membership {
   id           String     @id @default(uuid())
   name         String
   actualPrice  Decimal      @default(0)   // Original price
+  membershipDiscountedPrice Decimal @default(0)
   baseDuration Int          @default(0) // Base duration in months
   benefits     String[]   // Generic benefits
 
