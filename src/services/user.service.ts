@@ -61,7 +61,7 @@ class UserService {
 
   static async updateUser(id: string, data: any, gymId: string, branchId: string) {
     try {
-      const user = await UserDatabase.getById(id);
+      const user = await UserDatabase.getById(id, gymId, branchId);
       if (!user) {
         throw new AppError('User not found', 404, 'USER_NOT_FOUND');
       }
@@ -74,7 +74,7 @@ class UserService {
 
   static async deleteUser(id: string, gymId: string, branchId: string) {
     try {
-      const user = await UserDatabase.getById(id);
+      const user = await UserDatabase.getById(id, gymId, branchId);
       if (!user) {
         throw new AppError('User not found', 404, 'USER_NOT_FOUND');
       }
