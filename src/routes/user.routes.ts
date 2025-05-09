@@ -1,24 +1,26 @@
 import { Router } from 'express';
+import { authMiddleware, authorize } from '../utils/authMiddleware';
+import { UserRole } from '@prisma/client';
 import UserController from '../controllers/user.controller';
-
 
 const router = Router();
 // router.use(authMiddleware);
 
+router.use(authMiddleware); // 
 // Create a new user
-router.post('/', UserController.createUser);
+router.post('/', authorize(UserRole.SUPERADMIN, UserRole.ADMIN), UserController.createUser);
 router.post("/login", UserController.loginUser);
 
 // Get all users
-router.get('/', UserController.getAllUsers);
+router.get('/', authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  UserController.getAllUsers);
 // Get user by ID
-router.get('/:id', UserController.getUserById);
+router.get('/:id', authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  UserController.getUserById);
 // Get user by email
-router.get('/email/:email', UserController.getUserByEmail);
+router.get('/email/:email', authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  UserController.getUserByEmail);
 // Update user
-router.put('/:id', UserController.updateUser);
+router.put('/:id', authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  UserController.updateUser);
 // Delete user
-router.delete('/:id', UserController.deleteUser);
+router.delete('/:id',authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  UserController.deleteUser);
 export default router;
 
 

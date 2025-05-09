@@ -11,9 +11,9 @@ class UserService {
     }
   }
 
-  static async getAllUsers() {
+  static async getAllUsers(gymId: string, branchId: string) {
     try {
-      return await UserDatabase.getAll();
+      return await UserDatabase.getAll(gymId, branchId);
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError('Error fetching users', 500, 'USER_SERVICE_FETCH_ALL_ERROR');
@@ -33,9 +33,9 @@ class UserService {
 
   
 
-  static async getUserById(id: string) {
+  static async getUserById(id: string, gymId: string, branchId: string) {
     try {
-      const user = await UserDatabase.getById(id);
+      const user = await UserDatabase.getById(id, gymId, branchId);
       if (!user) {
         throw new AppError('User not found', 404, 'USER_NOT_FOUND');
       }
@@ -46,9 +46,9 @@ class UserService {
     }
   }
 
-  static async getUserByEmail(email: string) {
+  static async getUserByEmail(email: string, gymId: string, branchId: string) {
     try {
-      const user = await UserDatabase.getByEmail(email);
+      const user = await UserDatabase.getByEmail(email, gymId, branchId);
       if (!user) {
         throw new AppError('User not found', 404, 'USER_NOT_FOUND');
       }
@@ -59,26 +59,26 @@ class UserService {
     }
   }
 
-  static async updateUser(id: string, data: any) {
+  static async updateUser(id: string, data: any, gymId: string, branchId: string) {
     try {
       const user = await UserDatabase.getById(id);
       if (!user) {
         throw new AppError('User not found', 404, 'USER_NOT_FOUND');
       }
-      return await UserDatabase.update(id, data);
+      return await UserDatabase.update(id, { ...data, gymId, gymBranchId: branchId });
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(`Error updating user with ID: ${id}`, 500, 'USER_SERVICE_UPDATE_ERROR');
     }
   }
 
-  static async deleteUser(id: string) {
+  static async deleteUser(id: string, gymId: string, branchId: string) {
     try {
       const user = await UserDatabase.getById(id);
       if (!user) {
         throw new AppError('User not found', 404, 'USER_NOT_FOUND');
       }
-      return await UserDatabase.delete(id);
+      return await UserDatabase.delete(id, gymId, branchId);
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(`Error deleting user with ID: ${id}`, 500, 'USER_SERVICE_DELETE_ERROR');

@@ -209,6 +209,7 @@ export class MembershipService {
         "MEMBERSHIP_SERVICE_GET_BY_ID_ERROR"
       );
     }
+    
   }
 
   static async updateMembership(id: string, data: any, gymId: string, branchId: string) {

@@ -93,18 +93,30 @@ export class TraineeController {
   static async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const { gymId } = req.user!;
       // If using query parameter approach
       const gymBranchId = req.query.gymBranchId as string;
-
-      const data = req.body;
-      const { gymId } = req.user!;
 
       if (!gymId || !gymBranchId) {
         throw new Error("Gym ID and Branch ID are required");
       }
+
+      const { userData, traineeData, traineeMembershipData } = req.body;
+
+      const enrichedData = {
+        userData: userData ? { ...userData, gymId, gymBranchId } : undefined,
+        traineeData: traineeData
+          ? { ...traineeData, gymId, gymBranchId }
+          : undefined,
+        traineeMembershipData: traineeMembershipData
+          ? { ...traineeMembershipData, gymId, gymBranchId }
+          : undefined,
+        
+      };
+
       const trainee = await TraineeService.updateTrainee(
         id,
-        data,
+        enrichedData,
         gymId,
         gymBranchId
       );

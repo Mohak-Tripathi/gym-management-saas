@@ -1,16 +1,22 @@
-import { Request, Response } from 'express';
-import UserService from '../services/user.service';
-import { AppError } from '../utils/AppError';
-import { handleErrorResponse } from '../utils/handleErrorResponse';
-
+import { Request, Response } from "express";
+import UserService from "../services/user.service";
+import { AppError } from "../utils/AppError";
+import { handleErrorResponse } from "../utils/handleErrorResponse";
 
 class UserController {
   static async createUser(req: Request, res: Response) {
     try {
-      const user = await UserService.createUser(req.body);
+      const data = req.body;
+      const { gymId } = req.user!; // Get both gymId and branchId from authenticated user
+
+      if (!gymId) {
+        throw new Error("Gym ID and Branch ID are required");
+      }
+
+      const user = await UserService.createUser({ ...data, gymId });
       res.status(201).json({
-        status: 'success',
-        data: user
+        status: "success",
+        data: user,
       });
     } catch (err) {
       handleErrorResponse(res, err);
@@ -19,10 +25,17 @@ class UserController {
 
   static async getAllUsers(req: Request, res: Response) {
     try {
-      const users = await UserService.getAllUsers();
-     res.status(200).json({
-        status: 'success',
-        data: users
+      const { gymId } = req.user!;
+      if (!gymId) {
+        throw new Error("Gym ID is required");
+      }
+      // If using query parameter approach
+      const gymBranchId = req.query.gymBranchId as string;
+
+      const users = await UserService.getAllUsers(gymId, gymBranchId);
+      res.status(200).json({
+        status: "success",
+        data: users,
       });
     } catch (err) {
       handleErrorResponse(res, err);
@@ -31,10 +44,12 @@ class UserController {
 
   static async loginUser(req: Request, res: Response) {
     try {
-      const loginCredentials = await UserService.loginUserByEmailAndPassword(req.body);
-     res.status(200).json({
-        status: 'success',
-        data: loginCredentials
+      const loginCredentials = await UserService.loginUserByEmailAndPassword(
+        req.body
+      );
+      res.status(200).json({
+        status: "success",
+        data: loginCredentials,
       });
     } catch (err) {
       handleErrorResponse(res, err);
@@ -43,10 +58,20 @@ class UserController {
 
   static async getUserById(req: Request, res: Response) {
     try {
-      const user = await UserService.getUserById(req.params.id);
-       res.status(200).json({
-        status: 'success',
-        data: user
+      const { id } = req.params;
+
+      const gymBranchId = req.query.gymBranchId as string;
+
+      const { gymId } = req.user!;
+
+      if (!gymId || !gymBranchId) {
+        throw new Error("Gym ID and Branch ID are required");
+      }
+
+      const user = await UserService.getUserById(id, gymId, gymBranchId);
+      res.status(200).json({
+        status: "success",
+        data: user,
       });
     } catch (err) {
       handleErrorResponse(res, err);
@@ -55,10 +80,21 @@ class UserController {
 
   static async getUserByEmail(req: Request, res: Response) {
     try {
-      const user = await UserService.getUserByEmail(req.params.email);
+
+      const { email } = req.params;
+
+      const gymBranchId = req.query.gymBranchId as string;
+
+      const { gymId } = req.user!;
+
+      if (!gymId || !gymBranchId) {
+        throw new Error("Gym ID and Branch ID are required");
+      }
+
+      const user = await UserService.getUserByEmail(email, gymId, gymBranchId );
       res.status(200).json({
-        status: 'success',
-        data: user
+        status: "success",
+        data: user,
       });
     } catch (err) {
       handleErrorResponse(res, err);
@@ -67,10 +103,27 @@ class UserController {
 
   static async updateUser(req: Request, res: Response) {
     try {
-      const user = await UserService.updateUser(req.params.id, req.body);
+
+
+      const { id } = req.params;
+      const data = req.body;
+
+      const gymBranchId = req.query.gymBranchId as string;
+
+      const { gymId } = req.user!;
+
+      if (!gymId || !gymBranchId) {
+        throw new Error("Gym ID and Branch ID are required");
+      }
+
+      const user = await UserService.updateUser(    
+        id,
+        data,
+        gymId,
+        gymBranchId);
       res.status(200).json({
-        status: 'success',
-        data: user
+        status: "success",
+        data: user,
       });
     } catch (err) {
       handleErrorResponse(res, err);
@@ -79,20 +132,27 @@ class UserController {
 
   static async deleteUser(req: Request, res: Response) {
     try {
-      await UserService.deleteUser(req.params.id);
+
+
+      const { id } = req.params;
+
+      const gymBranchId = req.query.gymBranchId as string;
+
+      const { gymId } = req.user!;
+
+      if (!gymId || !gymBranchId) {
+        throw new Error("Gym ID and Branch ID are required");
+      }
+
+      await UserService.deleteUser(id, gymId, gymBranchId);
       res.status(200).json({
-        status: 'success',
-        message: 'User deleted successfully'
+        status: "success",
+        message: "User deleted successfully",
       });
     } catch (err) {
       handleErrorResponse(res, err);
     }
   }
-
- 
 }
-
-
-
 
 export default UserController;
