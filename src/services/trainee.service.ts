@@ -132,7 +132,7 @@ export class TraineeService {
     gymBranchId: string
   ) {
     try {
-      const trainee = await TraineeDatabase.update(
+      const trainee = await TraineeDatabase.updateTrainee(
         id,
         data,
         gymId,
@@ -168,19 +168,20 @@ export class TraineeService {
 
   static async deleteTrainee(id: string, gymId: string, gymBranchId: string) {
     try {
-      const trainee = await prisma.trainee.findFirst({
+      // const trainee = await prisma.trainee.findUnique({ where: { id } });
+      const trainee = await prisma.trainee.findUnique({
         where: {
-          id,
-          gymId,
-          gymBranchId,
-        },
-        include: {
-          user: true, // assuming `Trainee` has a relation to `User`
-        },
+          id
+        }
       });
 
       if (!trainee) {
         throw new AppError("Trainee not found", 404, "TRAINEE_NOT_FOUND");
+      }
+
+      // Step 2: Explicitly check tenant scoping
+      if (trainee.gymId !== gymId || trainee.gymBranchId !== gymBranchId) {
+        throw new AppError("Unauthorized access", 403, "UNAUTHORIZED_ACCESS");
       }
 
       await prisma.$transaction([
