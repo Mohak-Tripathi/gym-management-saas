@@ -204,6 +204,7 @@ export class MembershipController {
         ...data,
         gymId
       });
+      console.log(membership, "membership123")
       res.status(201).json(membership);
     } catch (err) {
       handleErrorResponse(res, err);

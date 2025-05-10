@@ -6,6 +6,7 @@ const prisma = new PrismaClient();
 
 export class MembershipDatabase {
   static async create(data: any) {
+    console.log(data, "data890")
     try {
       if (!data.gymId || !data.gymBranchId) {
         throw new AppError(
