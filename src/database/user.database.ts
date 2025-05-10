@@ -6,6 +6,7 @@ import { hashPassword } from "../utils/hashPassword";
 import { sendPasswordSetupEmail } from "../utils/emailService";
 import crypto from "crypto";
 
+
 const prisma = new PrismaClient();
 
 export class UserDatabase {
@@ -21,6 +22,7 @@ export class UserDatabase {
   //     );
   //   }
   // }
+
 
   // static async create(data: any) {
   //   try {
@@ -50,6 +52,7 @@ export class UserDatabase {
 
   static async create(data: any) {
     try {
+
       if (!data.gymId || !data.gymBranchId) {
         throw new AppError(
           "Gym ID and Branch ID are required",
@@ -57,6 +60,7 @@ export class UserDatabase {
           "USER_GYM_BRANCH_AND_GYM_ID_REQUIRED"
         );
       }
+
   
       // Generate secure random password
       const plainPassword = crypto.randomBytes(12).toString("hex");
@@ -72,12 +76,13 @@ export class UserDatabase {
           password: hashedPassword,
         },
       });
+
     } catch (error) {
       console.log(error, "error-user");
       throw new AppError("Error creating user", 500, "USER_DB_CREATE_ERROR");
     }
   }
-  
+
   static async getAll(gymId: string, branchId: string) {
     try {
       if (!gymId || !branchId) {

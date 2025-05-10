@@ -6,10 +6,10 @@ import UserController from '../controllers/user.controller';
 const router = Router();
 // router.use(authMiddleware);
 
+router.post("/login", UserController.loginUser);
 router.use(authMiddleware); // 
 // Create a new user
 router.post('/', authorize(UserRole.SUPERADMIN, UserRole.ADMIN), UserController.createUser);
-router.post("/login", UserController.loginUser);
 
 // Get all users
 router.get('/', authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  UserController.getAllUsers);
