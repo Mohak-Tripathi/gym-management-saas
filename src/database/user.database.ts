@@ -2,6 +2,9 @@ import { PrismaClient } from "@prisma/client";
 import { AppError } from "../utils/AppError";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { hashPassword } from "../utils/hashPassword";
+import { sendPasswordSetupEmail } from "../utils/emailService";
+import crypto from "crypto";
 
 const prisma = new PrismaClient();
 
@@ -19,32 +22,34 @@ export class UserDatabase {
   //   }
   // }
 
+  // static async create(data: any) {
+  //   try {
+
+  //     // For other roles, just create the user
+  //     if (!data.gymId || !data.gymBranchId) {
+  //       throw new AppError(
+  //         "Gym ID and Branch ID are required",
+  //         400,
+  //         "USER_GYM_BRANCH_AND_GYM_ID_REQUIRED"
+  //       );
+  //     }
+
+  //       // Generate a secure random password
+  //       const plainPassword = crypto.randomBytes(12).toString("hex"); // 24 character random string
+  //       // Hash the password for storage
+  //       const hashedPassword = await hashPassword(plainPassword);
+  //       await sendPasswordSetupEmail(data.email, plainPassword);
+
+  //     return await prisma.user.create({ ...data, password: hashedPassword });
+  //   } catch (error) {
+  //     console.log(error, "error-user");
+  //     throw new AppError("Error creating user", 500, "USER_DB_CREATE_ERROR");
+  //   }
+  // }
+
+
   static async create(data: any) {
     try {
-      // Hash password if present
-      // if (userData.password) {
-      //   userData.password = await bcrypt.hash(userData.password, 10);
-      // }
-
-      // // If role is ADMIN or RECEPTIONIST, create user and staffBranch in a transaction
-      // if (role === 'ADMIN' || role === 'RECEPTIONIST') {
-      //   return await prisma.$transaction(async (tx) => {
-      //     const user = await tx.user.create({ data: userData });
-
-      //     await tx.staffBranch.create({
-      //       data: {
-      //         userId: user.id,
-      //         role,
-      //         branchId,
-      //         gymId,
-      //       },
-      //     });
-
-      //     return user;
-      //   });
-      // }
-
-      // For other roles, just create the user
       if (!data.gymId || !data.gymBranchId) {
         throw new AppError(
           "Gym ID and Branch ID are required",
@@ -52,13 +57,27 @@ export class UserDatabase {
           "USER_GYM_BRANCH_AND_GYM_ID_REQUIRED"
         );
       }
-      return await prisma.user.create({ data });
+  
+      // Generate secure random password
+      const plainPassword = crypto.randomBytes(12).toString("hex");
+      const hashedPassword = await hashPassword(plainPassword);
+  
+      // Send password setup email
+      await sendPasswordSetupEmail(data.email, plainPassword);
+  
+      // Create user
+      return await prisma.user.create({
+        data: {
+          ...data,
+          password: hashedPassword,
+        },
+      });
     } catch (error) {
       console.log(error, "error-user");
       throw new AppError("Error creating user", 500, "USER_DB_CREATE_ERROR");
     }
   }
-
+  
   static async getAll(gymId: string, branchId: string) {
     try {
       if (!gymId || !branchId) {
@@ -224,11 +243,13 @@ export class UserDatabase {
           "USER_GYM_BRANCH_AND_GYM_ID_REQUIRED"
         );
       }
+
       return await prisma.user.update({
         where: { id, gymId: data.gymId, gymBranchId: data.gymBranchId },
         data,
       });
     } catch (error) {
+      console.log(error, "error")
       throw new AppError(
         `Error updating user with ID: ${id}`,
         500,

@@ -22,8 +22,12 @@ export class TraineeDatabase {
       return await prisma.trainee.findMany({
         where: { gymId, gymBranchId },
         include: {
-
-          traineeMemberships:true,
+          // traineeMemberships:true,
+          traineeMemberships: {
+            include: {
+              membership: true, // ✅ Include full membership object
+            },
+          },
           trainer: true,
           user: true,
         },
