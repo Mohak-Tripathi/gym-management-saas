@@ -200,6 +200,7 @@ export class MembershipController {
         throw new Error("Gym ID and Branch ID are required");
       }
 
+      
       const membership = await MembershipService.createMembership({
         ...data,
         gymId

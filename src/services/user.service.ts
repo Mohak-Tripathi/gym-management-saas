@@ -65,6 +65,7 @@ class UserService {
       if (!user) {
         throw new AppError('User not found', 404, 'USER_NOT_FOUND');
       }
+      
       return await UserDatabase.update(id, { ...data, gymId, gymBranchId: branchId });
     } catch (error) {
       if (error instanceof AppError) throw error;

@@ -15,9 +15,9 @@ export class CommunityPostService {
     }
   }
 
-  static async getAll() {
+  static async getAll(gymId: string, gymBranchId: string) {
     try {
-      return await CommunityPostDatabase.getAll();
+      return await CommunityPostDatabase.getAll(gymId, gymBranchId);
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(
@@ -28,9 +28,9 @@ export class CommunityPostService {
     }
   }
 
-  static async getById(id: string) {
+  static async getById(id: string, gymId: string, branchId: string) {
     try {
-      const post = await CommunityPostDatabase.getById(id);
+      const post = await CommunityPostDatabase.getById(id, gymId, branchId);
       if (!post) {
         throw new AppError(
           "Community post not found",
@@ -49,9 +49,9 @@ export class CommunityPostService {
     }
   }
 
-  static async update(id: string, data: any) {
+  static async update(id: string, data: any, gymId: string, branchId: string) {
     try {
-      const post = await CommunityPostDatabase.getById(id);
+      const post = await CommunityPostDatabase.getById(id, gymId, branchId);
       if (!post) {
         throw new AppError(
           "Community post not found",
@@ -59,7 +59,7 @@ export class CommunityPostService {
           "COMMUNITY_POST_NOT_FOUND"
         );
       }
-      return await CommunityPostDatabase.update(id, data);
+      return await CommunityPostDatabase.update(id, { ...data, gymId, gymBranchId: branchId });
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(
@@ -70,9 +70,9 @@ export class CommunityPostService {
     }
   }
 
-  static async delete(id: string) {
+  static async delete(id: string, gymId: string, branchId: string) {
     try {
-      const post = await CommunityPostDatabase.getById(id);
+      const post = await CommunityPostDatabase.getById(id, gymId, branchId);
       if (!post) {
         throw new AppError(
           "Community post not found",
@@ -80,7 +80,7 @@ export class CommunityPostService {
           "COMMUNITY_POST_NOT_FOUND"
         );
       }
-      return await CommunityPostDatabase.delete(id);
+      return await CommunityPostDatabase.delete(id, gymId, branchId);
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(
