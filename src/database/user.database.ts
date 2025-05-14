@@ -67,6 +67,7 @@ export class UserDatabase {
       const hashedPassword = await hashPassword(plainPassword);
   
       // Send password setup email
+      console.log("Sending password setup email to:", data.email);
       await sendPasswordSetupEmail(data.email, plainPassword);
   
       // Create user
