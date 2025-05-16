@@ -17,7 +17,7 @@ migrate:
 
 #Example to generate the prisma client and be in sync with db. 
 generate:
-	sudo docker-compose exec backend sh -c "npx prisma generate"
+	docker-compose exec backend sh -c "npx prisma generate"
 
 # Run Prisma Studio inside the backend Docker container
 studio:
@@ -29,7 +29,7 @@ dbpush:
 	docker-compose exec backend sh -c "npx prisma db push"
 
 devbuild:
-	sudo docker-compose up --build
+	docker-compose up --build
 
 dev: 
 	docker-compose up 
