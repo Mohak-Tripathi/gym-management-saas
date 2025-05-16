@@ -79,6 +79,7 @@ model Gym {
   notifications   Notification[]
   trainerSalaries TrainerSalary[]
   traineeMemberships TraineeMembership[] 
+  crmLeads    CRMLead[]
 
   passwordSetupTokens PasswordSetupToken[]
   staffBranches  StaffBranch[]
@@ -114,6 +115,7 @@ model GymBranch {
   communityPosts CommunityPost[]
   passwordSetupTokens PasswordSetupToken[]
   memberships Membership[] 
+  crmLeads    CRMLead[]
   
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -222,6 +224,7 @@ model Membership {
   benefits     String[]   // Generic benefits
 
   traineeMemberships TraineeMembership[] // One-to-many
+  crmLeads    CRMLead[]
 
   // Tenant scoping
   gymId        String
@@ -570,6 +573,49 @@ model StaffBranch {
   @@index([role])
 }
 
+
+
+
+
+model CRMLead {
+  id                 String      @id @default(uuid())
+  name               String
+  email              String?
+  contactNumber      String
+  whatsappNumber     String?
+  probabilityPercent        Int        
+  leadSource         String      // e.g., walk-in, Instagram, referral, etc.
+  status             LeadStatus  @default(NEW)
+  followUpDate       DateTime?
+  notes              String?
+  conversionDate     DateTime?
+
+  // ✅ Foreign key to Membership (expected plan)
+  expectedMembershipId String? 
+  expectedMembership   Membership? @relation(fields: [expectedMembershipId], references: [id])
+
+  // Multitenancy
+  gymId              String
+  gym                Gym         @relation(fields: [gymId], references: [id])
+  gymBranchId        String
+  gymBranch          GymBranch  @relation(fields: [gymBranchId], references: [id])
+
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  @@index([gymId])
+  @@index([gymBranchId])
+  @@index([status])
+}
+
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  FOLLOW_UP
+  CONVERTED
+  LOST
+}
 
 
 

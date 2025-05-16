@@ -10,6 +10,7 @@ import gymRoutes from "./routes/gym.routes"
 import gymBranchRoutes from "./routes/gymBranch.routes"
 import userRoutes from "./routes/user.routes"
 import passwordRoute from "./routes/passwordReset.routes"
+import crmLeads from "./routes/crmLead.route"
 
 
 dotenv.config();
@@ -77,6 +78,7 @@ app.use("/api/gym", gymRoutes)
 app.use("/api/gym-branch", gymBranchRoutes)
 app.use("/api/auth", userRoutes)
 app.use("/api/password", passwordRoute)
+app.use("/api/crm-lead", crmLeads)
 
 // Start the server
 // app.listen(PORT, () => {
