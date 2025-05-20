@@ -212,6 +212,38 @@ Security consid
 
 
 
+#Reduce the size of data by eleiminating unnecessary data fields using select. 
+return await prisma.equipment.findMany({
+            where: {
+              gymId,
+              gymBranchId: branchId,
+            },
+            include: {
+              gym: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+              gymBranch: {
+                select: {
+                  id: true,
+                  name: true,
+                  address: true,
+                },
+              },
+              maintenanceLogs: {
+                select: {
+                  id: true,
+                  maintenanceDate: true,
+                  status: true,
+                  comments: true,
+                },
+              },
+            },
+          })
+
+
 
 
 
