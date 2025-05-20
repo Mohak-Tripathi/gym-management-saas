@@ -675,7 +675,6 @@ model MaintenanceLog {
   gymBranch       GymBranch       @relation(fields: [gymBranchId], references: [id])
   performedBy     User?              @relation("UserMaintenances", fields: [performedById], references: [id])
 
-
   status          MaintenanceStatus // enum: COMPLETED, SKIPPED, NEEDS_PARTS
   comments        String?
   photoUrl        String?

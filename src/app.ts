@@ -12,6 +12,7 @@ import userRoutes from "./routes/user.routes";
 import passwordRoute from "./routes/passwordReset.routes";
 import crmLeads from "./routes/crmLead.route";
 import equipmentsRoute from "./routes/equipment.routes"
+import maintenanceSchedule from "./routes/maintenanceSchedule.routes"
 
 
 dotenv.config();
@@ -81,6 +82,7 @@ app.use("/api/auth", userRoutes)
 app.use("/api/password", passwordRoute)
 app.use("/api/crm-lead", crmLeads)
 app.use("/api/gym-equipments", equipmentsRoute)
+app.use("/api/maintenance-schedule",maintenanceSchedule)
 
 // Start the server
 // app.listen(PORT, () => {
