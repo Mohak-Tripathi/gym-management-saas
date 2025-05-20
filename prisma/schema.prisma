@@ -80,6 +80,9 @@ model Gym {
   trainerSalaries TrainerSalary[]
   traineeMemberships TraineeMembership[] 
   crmLeads    CRMLead[]
+  equipment           Equipment[]         // 👈 opposite side
+  maintenanceSchedules MaintenanceSchedule[]
+  maintenanceLogs     MaintenanceLog[]
 
   passwordSetupTokens PasswordSetupToken[]
   staffBranches  StaffBranch[]
@@ -116,6 +119,9 @@ model GymBranch {
   passwordSetupTokens PasswordSetupToken[]
   memberships Membership[] 
   crmLeads    CRMLead[]
+  equipment           Equipment[]         // 👈 opposite side
+  maintenanceSchedules MaintenanceSchedule[]
+  maintenanceLogs     MaintenanceLog[]
   
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -148,7 +154,8 @@ model User {
 
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
-   communityPosts    CommunityPost[]  // 👈 Relation back to CommunityPost
+  communityPosts    CommunityPost[]  // 👈 Relation back to CommunityPost
+  performedMaintenances MaintenanceLog[] @relation("UserMaintenances") // optional custom name
 
   @@index([gymId])
   @@index([gymBranchId])
@@ -615,6 +622,87 @@ enum LeadStatus {
   FOLLOW_UP
   CONVERTED
   LOST
+}
+
+
+
+model Equipment {
+  id              String              @id @default(uuid())
+  name            String
+  serialNumber    String?             @unique
+  gymId           String              // FK to Gym
+  gym             Gym                 @relation(fields: [gymId], references: [id])
+  gymBranchId     String              // FK to GymBranch
+  gymBranch       GymBranch           @relation(fields: [gymBranchId], references: [id])
+  purchaseDate    DateTime
+  status          EquipmentStatus     @default(WORKING) // enum
+  maintenanceSchedules MaintenanceSchedule[]
+  maintenanceLogs MaintenanceLog[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([gymId])
+  @@index([gymBranchId])
+}
+
+model MaintenanceSchedule {
+  id              String          @id @default(uuid())
+  equipmentId     String
+  equipment       Equipment       @relation(fields: [equipmentId], references: [id])
+  gymId           String
+  gym             Gym             @relation(fields: [gymId], references: [id])
+
+  gymBranchId     String
+  gymBranch       GymBranch       @relation(fields: [gymBranchId], references: [id])
+
+  frequency       MaintenanceFrequency // enum: DAILY, WEEKLY, MONTHLY, etc.
+  nextDueDate     DateTime
+  lastServicedAt  DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model MaintenanceLog {
+  id              String        @id @default(uuid())
+  equipmentId     String
+  equipment       Equipment     @relation(fields: [equipmentId], references: [id])
+  performedById   String?       // FK to User
+
+  gymId           String
+  gym             Gym             @relation(fields: [gymId], references: [id])
+
+  gymBranchId     String
+  gymBranch       GymBranch       @relation(fields: [gymBranchId], references: [id])
+  performedBy     User?              @relation("UserMaintenances", fields: [performedById], references: [id])
+
+  status          MaintenanceStatus // enum: COMPLETED, SKIPPED, NEEDS_PARTS
+  comments        String?
+  photoUrl        String?
+  maintenanceDate DateTime
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+
+
+enum EquipmentStatus {
+  WORKING
+  NEEDS_SERVICE
+  OUT_OF_ORDER
+}
+
+enum MaintenanceStatus {
+  COMPLETED
+  SKIPPED
+  NEEDS_PARTS
+}
+
+enum MaintenanceFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
 }
 
 

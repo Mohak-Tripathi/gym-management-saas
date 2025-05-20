@@ -4,13 +4,16 @@ import dotenv from 'dotenv';
 import traineeRoutes from './routes/trainee.routes';
 import membershipRoutes from "./routes/memebership.routes";
 import trainerRoutes from "./routes/trainer.routes";
-import traineemembershipRoutes from "./routes/traineemembership.routes"
-import communityPostRoutes from "./routes/communityPost.route"
-import gymRoutes from "./routes/gym.routes"
-import gymBranchRoutes from "./routes/gymBranch.routes"
-import userRoutes from "./routes/user.routes"
-import passwordRoute from "./routes/passwordReset.routes"
-import crmLeads from "./routes/crmLead.route"
+import traineemembershipRoutes from "./routes/traineemembership.routes";
+import communityPostRoutes from "./routes/communityPost.route";
+import gymRoutes from "./routes/gym.routes";
+import gymBranchRoutes from "./routes/gymBranch.routes";
+import userRoutes from "./routes/user.routes";
+import passwordRoute from "./routes/passwordReset.routes";
+import crmLeads from "./routes/crmLead.route";
+import equipmentsRoute from "./routes/equipment.routes"
+import maintenanceSchedule from "./routes/maintenanceSchedule.routes"
+
 
 
 dotenv.config();
@@ -79,6 +82,9 @@ app.use("/api/gym-branch", gymBranchRoutes)
 app.use("/api/auth", userRoutes)
 app.use("/api/password", passwordRoute)
 app.use("/api/crm-lead", crmLeads)
+app.use("/api/gym-equipments", equipmentsRoute)
+app.use("/api/maintenance-schedule",maintenanceSchedule)
+
 
 // Start the server
 // app.listen(PORT, () => {
