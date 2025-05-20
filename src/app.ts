@@ -14,6 +14,7 @@ import crmLeads from "./routes/crmLead.route";
 import equipmentsRoute from "./routes/equipment.routes"
 
 
+
 dotenv.config();
 
 const app = express();
@@ -81,6 +82,7 @@ app.use("/api/auth", userRoutes)
 app.use("/api/password", passwordRoute)
 app.use("/api/crm-lead", crmLeads)
 app.use("/api/gym-equipments", equipmentsRoute)
+
 
 // Start the server
 // app.listen(PORT, () => {

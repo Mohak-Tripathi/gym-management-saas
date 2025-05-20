@@ -84,6 +84,7 @@ model Gym {
   maintenanceSchedules MaintenanceSchedule[]
   maintenanceLogs     MaintenanceLog[]
 
+
   passwordSetupTokens PasswordSetupToken[]
   staffBranches  StaffBranch[]
 
@@ -119,10 +120,10 @@ model GymBranch {
   passwordSetupTokens PasswordSetupToken[]
   memberships Membership[] 
   crmLeads    CRMLead[]
-
   equipment           Equipment[]         // 👈 opposite side
   maintenanceSchedules MaintenanceSchedule[]
   maintenanceLogs     MaintenanceLog[]
+
   
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -626,6 +627,7 @@ enum LeadStatus {
 }
 
 
+
 model Equipment {
   id              String              @id @default(uuid())
   name            String
@@ -705,6 +707,7 @@ enum MaintenanceFrequency {
   QUARTERLY
   YEARLY
 }
+
 
 
 
