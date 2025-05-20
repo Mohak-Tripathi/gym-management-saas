@@ -15,6 +15,7 @@ import equipmentsRoute from "./routes/equipment.routes"
 import maintenanceSchedule from "./routes/maintenanceSchedule.routes"
 
 
+
 dotenv.config();
 
 const app = express();
@@ -83,6 +84,7 @@ app.use("/api/password", passwordRoute)
 app.use("/api/crm-lead", crmLeads)
 app.use("/api/gym-equipments", equipmentsRoute)
 app.use("/api/maintenance-schedule",maintenanceSchedule)
+
 
 // Start the server
 // app.listen(PORT, () => {
