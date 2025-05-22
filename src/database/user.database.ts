@@ -64,6 +64,7 @@ export class UserDatabase {
   
       // Generate secure random password
       const plainPassword = crypto.randomBytes(12).toString("hex");
+      console.log("plainPassword", plainPassword);
       const hashedPassword = await hashPassword(plainPassword);
   
       // Send password setup email
@@ -224,6 +225,62 @@ export class UserDatabase {
         "USER_DB_FETCH_BY_ID_ERROR"
       );
     }
+  }
+
+
+  static async changePasswordCurrentUser(data: any, userId: string) {
+    // try {
+    //   return await prisma.user.findUnique({
+    //     where: { email, gymId, gymBranchId: branchId },
+    //   });
+    // } catch (error) {
+    //   throw new AppError(
+    //     `Error fetching user with email: ${email}`,
+    //     500,
+    //     "USER_DB_FETCH_BY_EMAIL_ERROR"
+    //   );
+    // }
+
+    const { currentPassword, newPassword } = data;
+
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+      });
+  
+      if (!user || !user.password) {
+        throw new AppError("User not found or password not set", 404, "USER_DB_NOT_FOUND_ERROR");
+      }
+  
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        throw new AppError("Incorrect current password", 403, "USER_DB_CREDENTIALS_INVALID_ERROR");
+      }
+  
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+  
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          password: hashedPassword,
+        },
+      });
+  
+      return { message: "Password changed successfully" };
+  
+    } catch (error) {
+      throw new AppError(
+        `Error changing password for userId: ${userId}`,
+        500,
+        "USER_PASSWORD_CHANGE_ERROR"
+      );
+    }
+
+
+
+
+
+    
   }
 
   static async getByEmail(email: string, gymId: string, branchId: string) {

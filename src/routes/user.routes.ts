@@ -8,6 +8,7 @@ const router = Router();
 
 router.post("/login", UserController.loginUser);
 router.use(authMiddleware); // 
+router.post("/:id/change-password", UserController.changePassword);
 // Create a new user
 router.post('/', authorize(UserRole.SUPERADMIN, UserRole.ADMIN), UserController.createUser);
 
