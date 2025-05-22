@@ -49,7 +49,7 @@ model Trainee {
 
   user      User    @relation("UserTrainee", fields: [userId], references: [id])
   userId    String  @unique
-   trainer          Trainer?   @relation(fields: [trainerId], references: [id])
+  trainer          Trainer?   @relation(fields: [trainerId], references: [id])
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
@@ -137,6 +137,7 @@ model User {
   fullName   String
   role       UserRole
   phone      String?
+  birthDate   DateTime?
   
   // Tenant scoping (primary)
   gymId      String
@@ -253,7 +254,7 @@ model TraineeMembership {
   discountedPrice     Decimal    // What the customer actually paid
   discountPercentage  Int?
   reasonOfDiscount    String?
-  //payments  Payment[]
+  payments  Payment[]
 
   extraMonths         Int?       // Extra duration due to offer
   startDate           DateTime
@@ -276,27 +277,62 @@ model TraineeMembership {
 
 
 
+
+enum PaymentMethod {
+  CASH
+  CARD
+  UPI
+  BANK_TRANSFER
+  CHEQUE
+  WALLET      // e.g. Paytm Wallet, PhonePe wallet
+  OTHER       // fallback for rare cases
+}
+
+
+enum PaymentStatus {
+  PENDING     
+  PARTIALLY_PAID 
+  PAID        // Fully paid
+  FAILED      // Payment failed
+  CANCELLED   // Payment was cancelled
+  REFUNDED    // Admin issued refund
+}
+
+
+
 model Payment {
   id             String     @id @default(uuid())
+  // Link to Trainee & Membership
   trainee        Trainee    @relation(fields: [traineeId], references: [id])
   traineeId      String
-  amount         Decimal
+
+  traineeMembership TraineeMembership @relation(fields: [traineeMembershipId], references: [id])
+  traineeMembershipId String
+
+  amountPaid     Decimal    // what was paid in this transaction
+  totalAmountDue Decimal    // total amount expected for this membership
+
   paymentDate    DateTime
+  nextPaymentDate DateTime?  // only for partial payments
+
   paymentMethod  PaymentMethod
   transactionId  String?
   status         PaymentStatus
+
   // Tenant scoping
   gymId          String
   gym            Gym        @relation(fields: [gymId], references: [id])
+
+  gymBranchId    String
+  gymBranch      GymBranch  @relation(fields: [gymBranchId], references: [id])
+
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
-  
-  // Branch scoping (secondary)
-  gymBranchId     String
-  gymBranch       GymBranch @relation(fields: [gymBranchId], references: [id])
   @@index([gymId])
+  @@index([gymBranchId])
 }
+
 
 model WorkoutPlan {
   id          String   @id @default(uuid())
@@ -320,16 +356,7 @@ model WorkoutPlan {
   @@index([gymId])
 }
 
-//model Admin {
-  //id          String   @id @default(uuid())
-  //username    String   @unique
-  //email       String   @unique
-  //password    String
-  //role        AdminRole
-  //posts  CommunityPost[]
-  //notifications  Notification[]
-  //createdAt   DateTime @default(now())
-//}
+
 
 
 model TrainerSalary {
@@ -544,18 +571,8 @@ enum Gender {
 
 
 
-enum PaymentMethod {
-  CASH
-  CARD
-  UPI
-  BANK_TRANSFER
-}
 
-enum PaymentStatus {
-  SUCCESS
-  PENDING
-  FAILED
-}
+
 
 
 
