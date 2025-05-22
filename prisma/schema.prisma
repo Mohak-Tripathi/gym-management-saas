@@ -83,6 +83,7 @@ model Gym {
   equipment           Equipment[]         // 👈 opposite side
   maintenanceSchedules MaintenanceSchedule[]
   maintenanceLogs     MaintenanceLog[]
+  feedbacks     Feedback[]  
 
   passwordSetupTokens PasswordSetupToken[]
   staffBranches  StaffBranch[]
@@ -122,6 +123,7 @@ model GymBranch {
   equipment           Equipment[]         // 👈 opposite side
   maintenanceSchedules MaintenanceSchedule[]
   maintenanceLogs     MaintenanceLog[]
+  feedbacks     Feedback[]  
   
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -152,6 +154,7 @@ model User {
   trainer     Trainer?  @relation("UserTrainer")
   notifications  Notification[]  
   staffBranches  StaffBranch[]  // 👈 back relation
+  feedbacks     Feedback[]  
 
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
@@ -723,6 +726,33 @@ enum MaintenanceFrequency {
 }
 
 
+
+
+
+
+model Feedback {
+  id          String   @id @default(uuid())
+  message     String
+
+  // Optional link to User (who submitted)
+  userId      String? 
+  user        User?   @relation(fields: [userId], references: [id])
+
+  // Tenant scoping
+  gymId       String
+  gym         Gym     @relation(fields: [gymId], references: [id])
+
+  // Branch scoping (optional)
+  gymBranchId String?
+  gymBranch   GymBranch? @relation(fields: [gymBranchId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([gymId])
+  @@index([gymBranchId])
+  @@index([userId])
+}
 
 
 //TODO FOR Community feed (second phase)

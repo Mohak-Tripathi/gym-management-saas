@@ -31,6 +31,16 @@ class UserService {
   }
 
 
+  static async userChangePassword(data:any, userId: string) {
+    try {
+      return await UserDatabase.changePasswordCurrentUser(data, userId);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Error fetching users', 500, 'USER_SERVICE_FETCH_ALL_ERROR');
+    }
+  }
+
+
   
 
   static async getUserById(id: string, gymId: string, branchId: string) {

@@ -56,6 +56,22 @@ class UserController {
     }
   }
 
+  static async changePassword(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const passwordChanged = await UserService.userChangePassword(
+        req.body,
+        id
+      );
+      res.status(200).json({
+        status: "success",
+        data: passwordChanged,
+      });
+    } catch (err) {
+      handleErrorResponse(res, err);
+    }
+  }
+
   static async getUserById(req: Request, res: Response) {
     try {
       const { id } = req.params;
