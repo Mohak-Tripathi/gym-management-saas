@@ -25,7 +25,6 @@ model Trainee {
   id               String     @id @default(uuid())
   referenceMobileNo    String?    // Emergency or referral contact
   gender           Gender
-  image                String?    // Profile picture URL
   age              Int
   address          String
   status           TraineeStatus @default(ACTIVE) // NEW ENUM: ACTIVE, INACTIVE
@@ -134,12 +133,16 @@ model GymBranch {
 
 model User {
   id         String     @id @default(uuid())
-  email      String     @unique
   password   String?
   fullName   String
   role       UserRole
-  phone      String?
   birthDate   DateTime?
+  phone     String   @unique           // ✅ Mandatory & unique
+  email     String?  @unique           // ✅ Optional but must be unique if provided
+    // Image fields
+  imageUrl   String?
+  imageName  String?
+  mimeType   String?
   
   // Tenant scoping (primary)
   gymId      String
@@ -164,6 +167,9 @@ model User {
   @@index([gymId])
   @@index([gymBranchId])
 }
+
+
+
 
 
 
@@ -649,6 +655,9 @@ enum LeadStatus {
 model Equipment {
   id              String              @id @default(uuid())
   name            String
+  imageUrl   String?
+  imageName  String?
+  mimeType   String?
   serialNumber    String?             @unique
   gymId           String              // FK to Gym
   gym             Gym                 @relation(fields: [gymId], references: [id])
