@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authMiddleware, authorize } from '../utils/authMiddleware';
 import { UserRole } from '@prisma/client';
 import UserController from '../controllers/user.controller';
+import { upload } from '../middlewares/upload,middleware';
 
 const router = Router();
 // router.use(authMiddleware);
@@ -10,7 +11,14 @@ router.post("/login", UserController.loginUser);
 router.use(authMiddleware); // 
 router.post("/:id/change-password", UserController.changePassword);
 // Create a new user
-router.post('/', authorize(UserRole.SUPERADMIN, UserRole.ADMIN), UserController.createUser);
+// router.post('/', authorize(UserRole.SUPERADMIN, UserRole.ADMIN), UserController.createUser);
+
+router.post(
+  '/',
+  authorize(UserRole.SUPERADMIN, UserRole.ADMIN),
+  upload.single('image'),
+  UserController.createUser
+);
 
 // Get all users
 router.get('/', authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  UserController.getAllUsers);
@@ -22,6 +30,7 @@ router.get('/email/:email', authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  Use
 router.put('/:id', authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  UserController.updateUser);
 // Delete user
 router.delete('/:id',authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  UserController.deleteUser);
+
 export default router;
 
 
