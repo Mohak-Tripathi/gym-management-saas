@@ -1,34 +1,36 @@
 import { Request, Response, RequestHandler } from "express";
 import { EquipmentService } from "../services/equipment.service";
 import { handleErrorResponse } from "../utils/handleErrorResponse";
+import { fileURLToPath } from "node:url";
 
 export class EquipmentController {
-  static create: RequestHandler = async (
-    req: Request,
-    res: Response
-  ) => {
-    const data = req.body;
-    const { gymId } = req.user!; // Get both gymId and branchId from authenticated user
-
-    if (!gymId) {
-      throw new Error("Gym ID and Branch ID are required");
-    }
-
+  static create: RequestHandler = async (req: Request, res: Response) => {
     try {
-        const equipment = await EquipmentService.createEquipment({
-            ...data,
-            gymId,
-          });
-      res.status(201).json(equipment);
+      const data = req.body;
+      const file = req.file;
+      const { gymId } = req.user!;
+
+      if (!gymId) {
+        throw new Error("Gym ID is required");
+      }
+
+      const equipment = await EquipmentService.createEquipment(
+        {
+          ...data,
+          gymId,
+        },
+        file
+      );
+      res.status(201).json({
+        status: "success",
+        data: equipment,
+      });
     } catch (err) {
       handleErrorResponse(res, err);
     }
   };
 
-  static getAll: RequestHandler = async (
-    req: Request,
-    res: Response
-  ) => {
+  static getAll: RequestHandler = async (req: Request, res: Response) => {
     try {
       const { gymId } = req.user!;
       if (!gymId) {
@@ -41,17 +43,13 @@ export class EquipmentController {
         gymBranchId as string
       );
 
-
-    res.json(equipments);
+      res.json(equipments);
     } catch (err) {
       handleErrorResponse(res, err);
     }
   };
 
-  static getById: RequestHandler = async (
-    req: Request,
-    res: Response
-  ) => {
+  static getById: RequestHandler = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -63,7 +61,11 @@ export class EquipmentController {
         throw new Error("Gym ID and Branch ID are required");
       }
 
-      const equipment = await EquipmentService.getEquipmentById(id, gymId, gymBranchId);
+      const equipment = await EquipmentService.getEquipmentById(
+        id,
+        gymId,
+        gymBranchId
+      );
 
       if (!equipment) {
         res.status(404).json({
@@ -79,10 +81,7 @@ export class EquipmentController {
     }
   };
 
-  static update: RequestHandler = async (
-    req: Request,
-    res: Response
-  ) => {
+  static update: RequestHandler = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
@@ -95,17 +94,19 @@ export class EquipmentController {
         throw new Error("Gym ID and Branch ID are required");
       }
 
-      const equipment = await EquipmentService.updateEquipment(id, data, gymId, gymBranchId);
+      const equipment = await EquipmentService.updateEquipment(
+        id,
+        data,
+        gymId,
+        gymBranchId
+      );
       res.json(equipment);
     } catch (err) {
       handleErrorResponse(res, err);
     }
   };
 
-  static delete: RequestHandler = async (
-    req: Request,
-    res: Response
-  ) => {
+  static delete: RequestHandler = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -124,14 +125,3 @@ export class EquipmentController {
     }
   };
 }
-
-
-
-
-
-
-
-
-
-
-

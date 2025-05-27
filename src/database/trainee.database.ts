@@ -2,6 +2,9 @@ import { PrismaClient } from "@prisma/client";
 import { AppError } from "../utils/AppError";
 
 const prisma = new PrismaClient();
+import { getPresignedImageUrl } from "../utils/getPresignedImageUrl";
+
+
 
 export class TraineeDatabase {
   static async create(data: any) {
@@ -17,21 +20,90 @@ export class TraineeDatabase {
     }
   }
 
+  // static async getAll(gymId: string, gymBranchId: string) {
+  //   try {
+  //     return await prisma.trainee.findMany({
+  //       where: { gymId, gymBranchId },
+  //       include: {
+  //         // traineeMemberships:true,
+  //         traineeMemberships: {
+  //           include: {
+  //             membership: true, // ✅ Include full membership object
+  //           },
+  //         },
+  //         trainer: true,
+  //         user: true,
+  //       },
+  //     });
+  //   } catch (error) {
+  //     throw new AppError(
+  //       "Error fetching trainees",
+  //       500,
+  //       "TRAINEE_DB_FETCH_ALL_ERROR"
+  //     );
+  //   }
+  // }
+
+  // static async getById(id: string, gymId: string, gymBranchId: string) {
+  //   try {
+  //     const trainee = await prisma.trainee.findUnique({
+  //       where: {
+  //         id,
+  //         gymId,
+  //         gymBranchId,
+  //       },
+  //       include: {
+  //         traineeMemberships:true,
+  //         // membership: true,
+  //         user: true,
+  //         trainer: true,
+  //       },
+  //     });
+
+  //     if (!trainee) {
+  //       throw new AppError("Trainer not found", 404, "TRAINER_NOT_FOUND");
+  //     }
+
+  //     return trainee;
+  //   } catch (error) {
+  //     throw new AppError(
+  //       `Error fetching trainee with ID: ${id}`,
+  //       500,
+  //       "TRAINEE_DB_FETCH_BY_ID_ERROR"
+  //     );
+  //   }
+  // }
+
+
   static async getAll(gymId: string, gymBranchId: string) {
     try {
-      return await prisma.trainee.findMany({
+      const trainees = await prisma.trainee.findMany({
         where: { gymId, gymBranchId },
         include: {
-          // traineeMemberships:true,
           traineeMemberships: {
             include: {
-              membership: true, // ✅ Include full membership object
+              membership: true,
             },
           },
           trainer: true,
           user: true,
         },
       });
+  
+      const processedTrainees = await Promise.all(
+        trainees.map(async (trainee) => {
+
+          const signedImageUrl = await getPresignedImageUrl(trainee.user?.imageUrl);
+        
+  
+          return {
+            ...trainee,
+            imageUrl: signedImageUrl,
+          };
+        })
+      );
+  
+      return processedTrainees;
     } catch (error) {
       throw new AppError(
         "Error fetching trainees",
@@ -41,27 +113,40 @@ export class TraineeDatabase {
     }
   }
 
+  
+
+  
   static async getById(id: string, gymId: string, gymBranchId: string) {
     try {
-      const trainee = await prisma.trainee.findUnique({
+      const trainee = await prisma.trainee.findFirst({
         where: {
           id,
           gymId,
           gymBranchId,
         },
         include: {
-          traineeMemberships:true,
-          // membership: true,
+          traineeMemberships: {
+            include: {
+              membership: true,
+            },
+          },
           user: true,
           trainer: true,
         },
       });
-
+  
       if (!trainee) {
-        throw new AppError("Trainer not found", 404, "TRAINER_NOT_FOUND");
+        throw new AppError("Trainee not found", 404, "TRAINEE_NOT_FOUND");
       }
 
-      return trainee;
+      const signedImageUrl = await getPresignedImageUrl(trainee.user?.imageUrl);
+  
+   
+  
+      return {
+        ...trainee,
+        imageUrl: signedImageUrl,
+      };
     } catch (error) {
       throw new AppError(
         `Error fetching trainee with ID: ${id}`,
@@ -70,6 +155,7 @@ export class TraineeDatabase {
       );
     }
   }
+  
 
   // static async update(
   //   id: string,

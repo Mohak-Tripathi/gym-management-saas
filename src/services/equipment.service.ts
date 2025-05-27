@@ -4,9 +4,9 @@ import { AppError } from "../utils/AppError";
 
 
 export class  EquipmentService {
-  static async createEquipment(data: any) {
+  static async createEquipment(data: any, file?: Express.Multer.File) {
     try {
-      return await EquipmentDatabase.create(data);
+      return await EquipmentDatabase.create(data, file);
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(
