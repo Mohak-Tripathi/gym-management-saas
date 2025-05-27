@@ -4,16 +4,36 @@ import { AppError } from "../utils/AppError";
 import { handleErrorResponse } from "../utils/handleErrorResponse";
 
 class UserController {
+  // static async createUser(req: Request, res: Response) {
+  //   try {
+  //     const data = req.body;
+  //     const { gymId } = req.user!; // Get both gymId and branchId from authenticated user
+
+  //     if (!gymId) {
+  //       throw new Error("Gym ID and Branch ID are required");
+  //     }
+
+  //     const user = await UserService.createUser({ ...data, gymId });
+  //     res.status(201).json({
+  //       status: "success",
+  //       data: user,
+  //     });
+  //   } catch (err) {
+  //     handleErrorResponse(res, err);
+  //   }
+  // }
+
   static async createUser(req: Request, res: Response) {
     try {
       const data = req.body;
-      const { gymId } = req.user!; // Get both gymId and branchId from authenticated user
-
+      const file = req.file;
+      const { gymId } = req.user!;
+  
       if (!gymId) {
-        throw new Error("Gym ID and Branch ID are required");
+        throw new Error("Gym ID is required");
       }
-
-      const user = await UserService.createUser({ ...data, gymId });
+  
+      const user = await UserService.createUser({ ...data, gymId }, file);
       res.status(201).json({
         status: "success",
         data: user,
@@ -22,6 +42,7 @@ class UserController {
       handleErrorResponse(res, err);
     }
   }
+  
 
   static async getAllUsers(req: Request, res: Response) {
     try {

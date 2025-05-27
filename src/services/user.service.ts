@@ -2,14 +2,27 @@ import { UserDatabase } from '../database/user.database';
 import { AppError } from '../utils/AppError';
 
 class UserService {
-  static async createUser(data: any) {
-    try {
-      return await UserDatabase.create(data);
-    } catch (error) {
-      if (error instanceof AppError) throw error;
-      throw new AppError('Error creating user', 500, 'USER_SERVICE_CREATE_ERROR');
+  // static async createUser(data: any) {
+  //   try {
+  //     return await UserDatabase.create(data);
+  //   } catch (error) {
+  //     if (error instanceof AppError) throw error;
+  //     throw new AppError('Error creating user', 500, 'USER_SERVICE_CREATE_ERROR');
+  //   }
+  // }
+
+
+
+
+    static async createUser(data: any, file?: Express.Multer.File) {
+      try {
+        return await UserDatabase.create(data, file);
+      } catch (error) {
+        if (error instanceof AppError) throw error;
+        throw new AppError('Error creating user', 500, 'USER_SERVICE_CREATE_ERROR');
+      }
     }
-  }
+  
 
   static async getAllUsers(gymId: string, branchId: string) {
     try {
