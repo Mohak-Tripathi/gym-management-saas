@@ -26,13 +26,16 @@ model Trainee {
   referenceMobileNo    String?    // Emergency or referral contact
   gender           Gender
   age              Int
-  address          String
   status           TraineeStatus @default(ACTIVE) // NEW ENUM: ACTIVE, INACTIVE
   personalizedGoal     String[]    // e.g., "Fat Loss", "Muscle Gain", "Posture Correction"
   healthIssues         String[]   // e.g., ["Back Pain", "Knee Injury"]
 
   payments         Payment[]
   workoutPlans     WorkoutPlan[]
+  height         Float?     // Optional in case not provided initially
+  weight         Float?
+  bmi                Float?    
+  bodyFatPercentage  Float?   
 
   traineeMemberships TraineeMembership[] // One-to-many
   trainerId        String?
@@ -134,6 +137,7 @@ model User {
   id         String     @id @default(uuid())
   password   String?
   fullName   String
+  address      String?
   role       UserRole
   birthDate   DateTime?
   phone     String   @unique           // ✅ Mandatory & unique
@@ -197,6 +201,10 @@ model Trainer {
   trainees         Trainee[]
   workoutPlans     WorkoutPlan[]
   trainerSalaries  TrainerSalary[]
+  height         Float?     // Optional in case not provided initially
+  weight         Float?
+  bmi                Float?    
+  bodyFatPercentage  Float?   
 
   // Tenant scoping (primary)
   gymId           String
