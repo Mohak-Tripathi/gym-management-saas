@@ -6,17 +6,7 @@ import { hashPassword } from "../utils/hashPassword";
 import { sendPasswordSetupEmail } from "../utils/emailService";
 import crypto from "crypto";
 import { uploadImageToS3 } from '../utils/s3'; // Adjust the import path as needed
-
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
-
-const s3 = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
+import { getPresignedImageUrl } from "../utils/getPresignedImageUrl";
 
 
 const prisma = new PrismaClient();
@@ -192,16 +182,7 @@ static async getAll(gymId: string, branchId: string) {
 
     const processedUsers = await Promise.all(
       users.map(async (user) => {
-        let imageUrl = user.imageUrl;
-
-        if (imageUrl) {
-          const command = new GetObjectCommand({
-            Bucket: process.env.S3_BUCKET_NAME!,
-            Key: imageUrl,
-          });
-
-          imageUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 }); // 1 hour
-        }
+        let imageUrl = await getPresignedImageUrl(user?.imageUrl);
 
         return {
           ...user,
@@ -367,16 +348,7 @@ static async getById(id: string, gymId: string, branchId: string) {
       );
     }
 
-    let signedImageUrl = user.imageUrl;
-
-    if (user.imageUrl) {
-      const command = new GetObjectCommand({
-        Bucket: process.env.S3_BUCKET_NAME!,
-        Key: user.imageUrl,
-      });
-
-      signedImageUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
-    }
+    let signedImageUrl = await getPresignedImageUrl(user?.imageUrl);
 
     return {
       ...user,

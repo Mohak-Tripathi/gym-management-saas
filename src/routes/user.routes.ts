@@ -2,9 +2,10 @@ import { Router } from 'express';
 import { authMiddleware, authorize } from '../utils/authMiddleware';
 import { UserRole } from '@prisma/client';
 import UserController from '../controllers/user.controller';
-import { upload } from '../middlewares/upload,middleware';
+import { upload } from '../middlewares/upload.middleware';
 
 const router = Router();
+
 // router.use(authMiddleware);
 
 router.post("/login", UserController.loginUser);

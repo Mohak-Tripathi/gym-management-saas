@@ -7,15 +7,19 @@ export class TraineeController {
   static async onboard(req: Request, res: Response) {
     try {
       const { gymId } = req.user!;
+      const file = req.file; // ✅ Get uploaded image
       if (!gymId) {
         throw new Error("Gym ID is required");
       }
 
       // Get gymBranchId from request body instead of user context
-      const { userData, traineeData, traineeMembershipData } = req.body;
+
+      const userData = JSON.parse(req.body.userData);
+      const traineeData = JSON.parse(req.body.traineeData);
+      const traineeMembershipData = JSON.parse(req.body.traineeMembershipData);
 
       if (!traineeData.gymBranchId) {
-        throw new Error("Gym Branch ID is required in trainer data");
+        throw new Error("Gym Branch ID is required in trainee data");
       }
 
       const enrichedData = {
@@ -38,8 +42,10 @@ export class TraineeController {
 
       console.log("Enriched data:", enrichedData); // For debugging
 
-      const result =
-        await TraineeService.onboardTraineeWithMembership(enrichedData);
+      const result = await TraineeService.onboardTraineeWithMembership(
+        enrichedData,
+        file
+      );
       res.status(201).json(result);
     } catch (err) {
       handleErrorResponse(res, err);
@@ -111,7 +117,6 @@ export class TraineeController {
         traineeMembershipData: traineeMembershipData
           ? { ...traineeMembershipData, gymId, gymBranchId }
           : undefined,
-        
       };
 
       const trainee = await TraineeService.updateTrainee(

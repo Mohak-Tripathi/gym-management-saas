@@ -10,9 +10,10 @@ import crypto from "crypto";
 import { addMinutes } from "date-fns";
 import { sendPasswordSetupEmail } from "../utils/emailService";
 import { hashPassword } from "../utils/hashPassword";
+import { uploadImageToS3 } from "../utils/s3";
 
 export class TraineeService {
-  static async onboardTraineeWithMembership(data: any) {
+  static async onboardTraineeWithMembership(data: any,  file?: Express.Multer.File) {
     const {
       userData, // contains email, password, fullName, role (should be TRAINEE), etc.
       traineeData, // contains gender, DOB, etc.
@@ -28,6 +29,18 @@ export class TraineeService {
         );
       }
 
+
+          // Upload image if present
+    let imageData = {};
+    if (file) {
+      const { key, name: originalName, mime } = await uploadImageToS3(file, 'user-profile-images');
+      imageData = {
+        imageUrl: key,
+        imageName: originalName,
+        mimeType: mime,
+      };
+    }
+
       // Generate a secure random password
       const plainPassword = crypto.randomBytes(12).toString("hex"); // 24 character random string
       // Hash the password for storage
@@ -39,6 +52,7 @@ export class TraineeService {
           data: {
             ...userData,
             password: hashedPassword, // Store hashed password
+            ...imageData, // 🆕 add image data
           },
         });
 

@@ -8,6 +8,7 @@ const prisma = new PrismaClient();
 import crypto from "crypto";
 import { addMinutes } from "date-fns";
 import { hashPassword } from "../utils/hashPassword";
+import { uploadImageToS3 } from "../utils/s3";
 
 export class TrainerService {
   // static async createTrainer(data: any) {
@@ -26,7 +27,7 @@ export class TrainerService {
   //   }
   // }
 
-  static async onBoardTrainer(data: any) {
+  static async onBoardTrainer(data: any, file?: Express.Multer.File) {
     const {
       userData, // contains email, password, fullName, role (should be TRAINER), etc.
       trainerData, // contains specialization, experience, etc.
@@ -41,6 +42,18 @@ export class TrainerService {
         );
       }
 
+                // Upload image if present
+    let imageData = {};
+    if (file) {
+      const { key, name: originalName, mime } = await uploadImageToS3(file, 'user-profile-images');
+      imageData = {
+        imageUrl: key,
+        imageName: originalName,
+        mimeType: mime,
+      };
+    }
+
+
       console.log(data, "data23");
       // Generate a secure random password
       const plainPassword = crypto.randomBytes(12).toString("hex"); // 24 character random string
@@ -53,6 +66,7 @@ export class TrainerService {
           data: {
             ...userData,
             password: hashedPassword, // Store hashed password
+            ...imageData, // 🆕 add image data
           },
         });
 

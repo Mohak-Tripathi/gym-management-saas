@@ -34,6 +34,9 @@ devbuild:
 dev: 
 	docker-compose up 
 
+devdown: 
+	docker-compose down
+
 create-superadmin-ts:
 	docker-compose exec backend sh -c "npx ts-node src/scripts/createSuperAdminAndGym.ts"
 

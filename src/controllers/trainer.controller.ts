@@ -4,35 +4,7 @@ import { handleErrorResponse } from "../utils/handleErrorResponse";
 import { prisma } from "../database/prisma";
 
 export const TrainerController = {
-  // async create(req: Request, res: Response) {
-  //   try {
-  //     // const gymId = req.user?.gymId;
-  //     const { gymId, gymBranchId } = req.user!;
-  //     if (!gymId || !gymBranchId) {
-  //       throw new Error("Gym ID or Gymbranchid is required");
-  //     }
-  //     //const trainer = await TrainerService.onBoardTrainer({ ...req.body, gymId, gymBranchId });
-  //      // Destructure the incoming request body
-  //   const { userData, trainerData } = req.body;
 
-  //   // Add gymId and gymBranchId to userData since User table needs these fields
-  //   const enrichedData = {
-  //     userData: { ...userData, gymId, gymBranchId },
-  //     trainerData: { ...trainerData, gymId, gymBranchId }
-  //   };
-
-  //   console.log(enrichedData, "enrichedData")
-
-  //   const trainer = await TrainerService.onBoardTrainer(enrichedData);
-
-  //     res.status(201).json({
-  //       status: "success",
-  //       data: trainer
-  //     });
-  //   } catch (err) {
-  //     handleErrorResponse(res, err);
-  //   }
-  // },
 
   async create(req: Request, res: Response) {
     try {
@@ -41,8 +13,11 @@ export const TrainerController = {
         throw new Error("Gym ID is required");
       }
 
-      // Get gymBranchId from request body instead of user context
-      const { userData, trainerData } = req.body;
+      const file = req.file; // ✅ Get uploaded image
+
+      // Get gymBranchId from request body instead of user context      
+      const userData = JSON.parse(req.body.userData);
+      const trainerData = JSON.parse(req.body.trainerData);
 
       if (!trainerData.gymBranchId) {
         throw new Error("Gym Branch ID is required in trainer data");
@@ -63,7 +38,7 @@ export const TrainerController = {
 
       console.log("Enriched data:", enrichedData); // For debugging
 
-      const trainer = await TrainerService.onBoardTrainer(enrichedData);
+      const trainer = await TrainerService.onBoardTrainer(enrichedData, file);
       res.status(201).json({
         status: "success",
         data: trainer,

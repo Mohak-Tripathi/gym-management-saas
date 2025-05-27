@@ -45,7 +45,6 @@ model Trainee {
   gymBranchId     String
   gymBranch       GymBranch @relation(fields: [gymBranchId], references: [id])
 
-
   user      User    @relation("UserTrainee", fields: [userId], references: [id])
   userId    String  @unique
   trainer          Trainer?   @relation(fields: [trainerId], references: [id])
@@ -539,7 +538,6 @@ enum SalaryStatus {
   PENDING
   FAILED
 }
-
 
 
 

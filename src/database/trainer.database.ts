@@ -1,7 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { AppError } from "../utils/AppError";
+import { getPresignedImageUrl } from "../utils/getPresignedImageUrl";
 
 const prisma = new PrismaClient();
+
+
 
 export class TrainerDB {
   static async create(data: any) {
@@ -17,31 +20,113 @@ export class TrainerDB {
     }
   }
 
+  // static async getAll(gymId: string, gymBranchId: string) {
+  //   try {
+  //     return await prisma.trainer.findMany({
+  //       where: { gymId, gymBranchId },
+  //       include: {
+  //         user: true,
+  //         certifications: true,
+  //         trainees: true,
+  //         workoutPlans: true,
+  //         trainerSalaries: true,
+  //       },
+  //     });
+  //   } catch (error) {
+  //     throw new AppError(
+  //       "Error fetching trainers",
+  //       500,
+  //       "TRAINER_DB_FETCH_ALL_ERROR"
+  //     );
+  //   }
+  // }
+
+
   static async getAll(gymId: string, gymBranchId: string) {
     try {
-      return await prisma.trainer.findMany({
+      if (!gymId || !gymBranchId) {
+        throw new AppError(
+          "Gym ID and Branch ID are required",
+          400,
+          "TRAINEE_GYM_BRANCH_AND_GYM_ID_REQUIRED"
+        );
+      }
+  
+      const trainees = await prisma.trainee.findMany({
         where: { gymId, gymBranchId },
         include: {
-          user: true,
-          certifications: true,
-          trainees: true,
+          user: true, // For imageUrl
+          payments: true,
           workoutPlans: true,
-          trainerSalaries: true,
+          traineeMemberships: true,
+          trainer: true,
         },
       });
+  
+      // Add signed image URLs
+      const processedTrainees = await Promise.all(
+        trainees.map(async (trainee) => {
+
+          const signedImageUrl = await getPresignedImageUrl(trainee.user?.imageUrl);
+  
+
+          return {
+            ...trainee,
+            imageUrl: signedImageUrl, // Exposed at top level
+          };
+        })
+      );
+  
+      return processedTrainees;
     } catch (error) {
       throw new AppError(
-        "Error fetching trainers",
+        "Error fetching trainees",
         500,
-        "TRAINER_DB_FETCH_ALL_ERROR"
+        "TRAINEE_DB_FETCH_ALL_ERROR"
       );
     }
   }
+  
+
+  // static async getById(id: string, gymId: string, gymBranchId: string) {
+  //   try {
+  //     const trainer = await prisma.trainer.findFirst({
+  //       // or findUnique with compound where
+  //       where: {
+  //         id,
+  //         gymId,
+  //         gymBranchId,
+  //       },
+  //       include: {
+  //         certifications: true,
+  //         user: true,
+  //         trainees: true,
+  //         workoutPlans: true,
+  //         trainerSalaries: true,
+  //       },
+  //     });
+
+  //     if (!trainer) {
+  //       throw new AppError("Trainer not found", 404, "TRAINER_NOT_FOUND");
+  //     }
+
+  //     return trainer;
+  //   } catch (error) {
+  //     if (error instanceof AppError) {
+  //       throw error;
+  //     }
+  //     throw new AppError(
+  //       "Error fetching trainer",
+  //       500,
+  //       "TRAINER_DB_FETCH_BY_ID_ERROR"
+  //     );
+  //   }
+  // }
+
 
   static async getById(id: string, gymId: string, gymBranchId: string) {
     try {
       const trainer = await prisma.trainer.findFirst({
-        // or findUnique with compound where
         where: {
           id,
           gymId,
@@ -55,12 +140,18 @@ export class TrainerDB {
           trainerSalaries: true,
         },
       });
-
+  
       if (!trainer) {
         throw new AppError("Trainer not found", 404, "TRAINER_NOT_FOUND");
       }
-
-      return trainer;
+  
+      // Generate signed image URL if exists
+      const signedImageUrl = await getPresignedImageUrl(trainer.user?.imageUrl);
+  
+      return {
+        ...trainer,
+        imageUrl: signedImageUrl, // Expose at top level
+      };
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -72,6 +163,7 @@ export class TrainerDB {
       );
     }
   }
+  
 
   // static async update(
   //   id: string,

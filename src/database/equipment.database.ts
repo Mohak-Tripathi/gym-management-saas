@@ -1,10 +1,23 @@
 import { PrismaClient } from "@prisma/client";
 import { AppError } from "../utils/AppError";
+import { uploadImageToS3 } from "../utils/s3";
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const prisma = new PrismaClient();
 
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION!,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
+
+
 export class EquipmentDatabase {
-  static async create(data: any) {
+  static async create(data: any, file?: Express.Multer.File) {
     try {
       if (!data.gymId || !data.gymBranchId) {
         throw new AppError(
@@ -13,8 +26,19 @@ export class EquipmentDatabase {
           "GYM_EQUIPMENT_GYM_BRANCH_ID_REQUIRED"
         );
       }
+
+      let imageData = {};
+      if (file) {
+        // const { key, name: originalName, mime } = await uploadImageToS3(file);
+        const { key, name: originalName, mime } = await uploadImageToS3(file, 'Muscletech-equipment-images');
+        imageData = {
+          imageUrl: key,
+          imageName: originalName,
+          mimeType: mime,
+        };
+      }
       
-      return await  prisma.equipment.create({ data });
+      return await  prisma.equipment.create({ data : { ...data, ...imageData } });
     } catch (error) {
       console.error("Gym Equipment Create Error:", error);
       throw new AppError(
@@ -35,10 +59,10 @@ export class EquipmentDatabase {
         );
       }
 
-        return await prisma.equipment.findMany({
-            where: {
-              gymId,
-              gymBranchId: branchId,
+      const equipments = await prisma.equipment.findMany({
+        where: {
+          gymId,
+          gymBranchId: branchId,
             },
             include: {
               gym: {
@@ -64,8 +88,28 @@ export class EquipmentDatabase {
               },
             },
           })
+
+          const processedEquipments = await Promise.all(
+            equipments.map(async (equipment) => {
+              let imageUrl = equipment.imageUrl;
+              
+              if (imageUrl) {
+                const command = new GetObjectCommand({
+                  Bucket: process.env.S3_BUCKET_NAME!,
+                  Key: imageUrl,
+                });
+
+                imageUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 }); // 1 hour
+              }
+
+              return {
+                ...equipment,
+                imageUrl,
+              };
+            })
+          )   
           
-    
+    return processedEquipments;
     } catch (error) {
       console.error("Gym Equipment Fetch All Error:", error);
       throw new AppError(
@@ -86,7 +130,7 @@ export class EquipmentDatabase {
         );
       }
 
-      return await prisma.equipment.findFirst({
+      const equipment = await prisma.equipment.findFirst({
         where: {
           id,
           gymId,
@@ -120,6 +164,31 @@ export class EquipmentDatabase {
             },
           },
       });
+
+
+      if (!equipment) {
+        throw new AppError(
+          `Equipment with ID ${id} not found`,
+          404,
+          "GYM_EQUIPMENT_NOT_FOUND"
+        );
+      }
+
+      let signedImageUrl = equipment.imageUrl;
+
+      if (signedImageUrl) {
+        const command = new GetObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME!,
+          Key: signedImageUrl,
+        });
+        
+        signedImageUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 }); // 1 hour
+      }
+
+      return {
+        ...equipment,
+        imageUrl: signedImageUrl,
+      };
     } catch (error) {
       console.error("CRMLead GetById Error:", error);
       throw new AppError(
