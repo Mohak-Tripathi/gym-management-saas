@@ -53,6 +53,7 @@ model Trainee {
   trainer          Trainer?   @relation(fields: [trainerId], references: [id])
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
+  invoices  Invoice[]  // back relation to Invoice
 
   @@index([gymId])
   @@index([gymBranchId])
@@ -112,6 +113,7 @@ model GymBranch {
   traineeMemberships TraineeMembership[] // Inverse relation
   users        User[]
   staffBranches  StaffBranch[]
+  invoices  Invoice[]  // back relation to Invoice
 
   notifications Notification[]
   payments      Payment[]
@@ -271,6 +273,7 @@ model TraineeMembership {
   discountPercentage  Int?
   reasonOfDiscount    String?
   payments  Payment[]
+  invoices  Invoice[]  // back relation to Invoice
 
   extraMonths         Int?       // Extra duration due to offer
   startDate           DateTime
@@ -334,6 +337,8 @@ model Payment {
   paymentMethod  PaymentMethod
   transactionId  String?
   status         PaymentStatus
+  invoiceId  String
+  invoice    Invoice   @relation(fields: [invoiceId], references: [id])
 
   // Tenant scoping
   gymId          String
@@ -768,6 +773,61 @@ model Feedback {
   @@index([gymBranchId])
   @@index([userId])
 }
+
+
+enum InvoiceStatus {
+  PENDING
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+
+model Invoice {
+  id              String        @id @default(uuid())
+  traineeId       String
+  trainee         Trainee       @relation(fields: [traineeId], references: [id])
+
+  membershipId    String
+  membership      TraineeMembership @relation(fields: [membershipId], references: [id])
+
+  gymBranchId     String
+  gymBranch       GymBranch     @relation(fields: [gymBranchId], references: [id])
+
+  receiptNumber   String        @unique // e.g., INV-2025-0001
+  membershipType  String        // Could be fetched from related model or manually noted
+  startDate       DateTime
+  endDate         DateTime
+
+  amountPaid      Float         @default(0)  // Total amount paid so far
+  dueAmount       Float         // Total invoice amount
+  paymentMode     PaymentMode?  // Could be optional if multiple payments happen
+  amountInWords   String
+  terms           String?
+  pdfUrl          String
+  currency        String        @default("INR")
+  status          InvoiceStatus @default(PENDING)
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // New: Relations to payment
+  payments        Payment[]
+
+  @@index([traineeId])
+  @@index([status])
+}
+
+enum PaymentMode {
+  CASH
+  CARD
+  UPI
+  NET_BANKING
+  CHEQUE
+  OTHER
+}
+
 
 
 //TODO FOR Community feed (second phase)
