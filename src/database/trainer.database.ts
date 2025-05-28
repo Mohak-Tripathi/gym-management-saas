@@ -4,8 +4,6 @@ import { getPresignedImageUrl } from "../utils/getPresignedImageUrl";
 
 const prisma = new PrismaClient();
 
-
-
 export class TrainerDB {
   static async create(data: any) {
     try {
@@ -41,42 +39,41 @@ export class TrainerDB {
   //   }
   // }
 
-
   static async getAll(gymId: string, gymBranchId: string) {
     try {
       if (!gymId || !gymBranchId) {
         throw new AppError(
           "Gym ID and Branch ID are required",
           400,
-          "TRAINEE_GYM_BRANCH_AND_GYM_ID_REQUIRED"
+          "TRAINER_GYM_BRANCH_AND_GYM_ID_REQUIRED"
         );
       }
-  
-      const trainees = await prisma.trainee.findMany({
+
+      const trainers = await prisma.trainer.findMany({
         where: { gymId, gymBranchId },
         include: {
-          user: true, // For imageUrl
-          payments: true,
+          user: true,
+          certifications: true,
+          trainees: true,
           workoutPlans: true,
-          traineeMemberships: true,
-          trainer: true,
+          trainerSalaries: true,
         },
       });
-  
+
       // Add signed image URLs
       const processedTrainees = await Promise.all(
-        trainees.map(async (trainee) => {
-
-          const signedImageUrl = await getPresignedImageUrl(trainee.user?.imageUrl);
-  
+        trainers.map(async (trainer) => {
+          const signedImageUrl = await getPresignedImageUrl(
+            trainer.user?.imageUrl
+          );
 
           return {
-            ...trainee,
+            ...trainer,
             imageUrl: signedImageUrl, // Exposed at top level
           };
         })
       );
-  
+
       return processedTrainees;
     } catch (error) {
       throw new AppError(
@@ -86,7 +83,6 @@ export class TrainerDB {
       );
     }
   }
-  
 
   // static async getById(id: string, gymId: string, gymBranchId: string) {
   //   try {
@@ -123,7 +119,6 @@ export class TrainerDB {
   //   }
   // }
 
-
   static async getById(id: string, gymId: string, gymBranchId: string) {
     try {
       const trainer = await prisma.trainer.findFirst({
@@ -140,14 +135,14 @@ export class TrainerDB {
           trainerSalaries: true,
         },
       });
-  
+
       if (!trainer) {
         throw new AppError("Trainer not found", 404, "TRAINER_NOT_FOUND");
       }
-  
+
       // Generate signed image URL if exists
       const signedImageUrl = await getPresignedImageUrl(trainer.user?.imageUrl);
-  
+
       return {
         ...trainer,
         imageUrl: signedImageUrl, // Expose at top level
@@ -163,7 +158,6 @@ export class TrainerDB {
       );
     }
   }
-  
 
   // static async update(
   //   id: string,
@@ -217,24 +211,27 @@ export class TrainerDB {
   //   }
   // }
 
-
-
-  static async update(id: string, data: any, gymId: string, gymBranchId: string) {
+  static async update(
+    id: string,
+    data: any,
+    gymId: string,
+    gymBranchId: string
+  ) {
     const { userData, trainerData } = data;
-  
+
     try {
-      console.log(userData, trainerData, gymId, gymBranchId, "helo")
+      console.log(userData, trainerData, gymId, gymBranchId, "helo");
       return await prisma.$transaction(async (tx) => {
         const existingTrainer = await tx.trainer.findFirst({
           where: {
-            id
+            id,
           },
           include: {
             user: true,
           },
         });
-  
-        console.log(existingTrainer, "existing trainer")
+
+        console.log(existingTrainer, "existing trainer");
         if (!existingTrainer) {
           throw new AppError(
             "Trainer not found or unauthorized access",
@@ -242,7 +239,7 @@ export class TrainerDB {
             "TRAINER_NOT_FOUND"
           );
         }
-  
+
         // 1. Update User (only if userData exists)
         if (userData) {
           await tx.user.update({
@@ -250,7 +247,7 @@ export class TrainerDB {
             data: userData,
           });
         }
-  
+
         // 2. Update Trainer
         const updatedTrainer = await tx.trainer.update({
           where: { id },
@@ -263,12 +260,12 @@ export class TrainerDB {
             trainerSalaries: true,
           },
         });
-  
+
         return updatedTrainer;
       });
     } catch (error) {
       if (error instanceof AppError) throw error;
-  
+
       throw new AppError(
         "Error updating trainer and user",
         500,
@@ -276,7 +273,6 @@ export class TrainerDB {
       );
     }
   }
-  
 
   // static async delete(id: string, gymId: string, gymBranchId: string) {
   //   try {
