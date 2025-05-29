@@ -411,13 +411,15 @@ model TrainerSalary {
 
 model CommunityPost {
   id          String       @id @default(uuid())
-  title       String
+  title       String?
   content     String       // Rich text or plain text
-  imageUrls   String[]     // Optional images (e.g., before/after transformation, announcement banner)
-  category    PostCategory
+  images      CommunityPostImage[]
+
+
+  category    PostCategory @default(GENERAL) // ✅ Default value set here
 
   isPinned    Boolean      @default(false) // For important or sticky posts
-  visibleTo   UserGroup[]  // Enum: who should see this post (optional)
+
 
   // Tenant scoping
   gymId        String
@@ -435,6 +437,20 @@ model CommunityPost {
   @@index([gymId, gymBranchId])
   @@index([userId])
 }
+
+
+model CommunityPostImage {
+  id              String         @id @default(uuid())
+  imageUrl        String
+  imageName       String
+  mimeType        String
+
+  communityPostId String
+  communityPost   CommunityPost @relation(fields: [communityPostId], references: [id])
+
+  createdAt       DateTime       @default(now())
+}
+
 
 
 
