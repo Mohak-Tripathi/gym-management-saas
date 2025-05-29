@@ -163,40 +163,98 @@ export class UserDatabase {
 
 
 
-static async getAll(gymId: string, branchId: string) {
-  try {
-    if (!gymId || !branchId) {
+// static async getAll(gymId: string, branchId: string) {
+//   try {
+//     if (!gymId || !branchId) {
+//       throw new AppError(
+//         "Gym ID and Branch ID are required",
+//         400,
+//         "USER_GYM_BRANCH_AND_GYM_ID_REQUIRED"
+//       );
+//     }
+
+//     const users = await prisma.user.findMany({
+//       where: {
+//         gymId,
+//         gymBranchId: branchId,
+//       },
+//     });
+
+//     const processedUsers = await Promise.all(
+//       users.map(async (user) => {
+//         let imageUrl = await getPresignedImageUrl(user?.imageUrl);
+
+//         return {
+//           ...user,
+//           imageUrl,
+//         };
+//       })
+//     );
+
+//     return processedUsers;
+//   } catch (error) {
+//     console.log(error, 'USER_DB_FETCH_ALL_ERROR');
+//     throw new AppError("Error fetching users", 500, "USER_DB_FETCH_ALL_ERROR");
+//   }
+// }
+
+
+
+
+
+  static async getAll(gymId: string, branchId: string) {
+    try {
+      if (!gymId || !branchId) {
+        throw new AppError(
+          "Gym ID and Branch ID are required",
+          400,
+          "COMMUNITY_POST_GYM_BRANCH_ID_REQUIRED"
+        );
+      }
+
+      const posts = await prisma.communityPost.findMany({
+        where: {
+          gymId,
+          gymBranchId: branchId,
+        },
+        include: {
+          images: true,
+          user: true, // optional: include postedBy info
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      const processedPosts = await Promise.all(
+        posts.map(async (post) => {
+          const imagesWithUrls = await Promise.all(
+            post.images.map(async (img:any) => {
+              const presignedUrl = await getPresignedImageUrl(img.imageUrl);
+              return {
+                ...img,
+                imageUrl: presignedUrl,
+              };
+            })
+          );
+
+          return {
+            ...post,
+            images: imagesWithUrls,
+          };
+        })
+      );
+
+      return processedPosts;
+
+    } catch (error) {
+      console.log(error, "COMMUNITY_POST_DB_FETCH_ALL_ERROR");
       throw new AppError(
-        "Gym ID and Branch ID are required",
-        400,
-        "USER_GYM_BRANCH_AND_GYM_ID_REQUIRED"
+        "Error fetching community posts",
+        500,
+        "COMMUNITY_POST_DB_FETCH_ALL_ERROR"
       );
     }
-
-    const users = await prisma.user.findMany({
-      where: {
-        gymId,
-        gymBranchId: branchId,
-      },
-    });
-
-    const processedUsers = await Promise.all(
-      users.map(async (user) => {
-        let imageUrl = await getPresignedImageUrl(user?.imageUrl);
-
-        return {
-          ...user,
-          imageUrl,
-        };
-      })
-    );
-
-    return processedUsers;
-  } catch (error) {
-    console.log(error, 'USER_DB_FETCH_ALL_ERROR');
-    throw new AppError("Error fetching users", 500, "USER_DB_FETCH_ALL_ERROR");
   }
-}
+
 
 
   // static async loginCurrentUser(data:any) {

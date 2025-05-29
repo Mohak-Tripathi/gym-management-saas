@@ -16,9 +16,13 @@ router.post(
     upload.array('images'), // 👈 Accept multiple images
     CommunityPostController.create
   );
+
 router.get("/",authorize(UserRole.SUPERADMIN, UserRole.ADMIN), CommunityPostController.getAll);
+
 router.get("/:id",authorize(UserRole.SUPERADMIN, UserRole.ADMIN), CommunityPostController.getById);
-router.put("/:id", authorize(UserRole.SUPERADMIN, UserRole.ADMIN), CommunityPostController.update);
+
+// router.put("/:id", authorize(UserRole.SUPERADMIN, UserRole.ADMIN), CommunityPostController.update);
+router.put("/:id",authorize(UserRole.SUPERADMIN, UserRole.ADMIN), upload.array("images"), CommunityPostController.update);
 router.delete("/:id",authorize(UserRole.SUPERADMIN, UserRole.ADMIN), CommunityPostController.delete);
 
 export default router;

@@ -8,28 +8,7 @@ const s3 = new AWS.S3({
 });
 
 
-// export const uploadImageToS3 = async (
-//   file: Express.Multer.File
-// ): Promise<{ key: string; name: string; mime: string }> => {
-//   const fileExtension = file.originalname.split(".").pop();
-//   const fileName = `${uuidv4()}.${fileExtension}`;
-//   const key = `domain-icons/${fileName}`;
 
-//   const params = {
-//     Bucket: process.env.S3_BUCKET_NAME!,
-//     Key: key,
-//     Body: file.buffer,
-//     ContentType: file.mimetype,
-//   };
-
-//   await s3.upload(params).promise();
-
-//   return {
-//     key, // <-- Only store key
-//     name: file.originalname,
-//     mime: file.mimetype,
-//   };
-// };
 
 export const uploadImageToS3 = async (
     file: Express.Multer.File,
@@ -55,6 +34,21 @@ export const uploadImageToS3 = async (
     };
   };
   
+
+
+  export const deleteImageFromS3 = async (key: string): Promise<void> => {
+    const params = {
+      Bucket: process.env.S3_BUCKET_NAME!,
+      Key: key,
+    };
+  
+    try {
+      await s3.deleteObject(params).promise();
+    } catch (err) {
+      console.error(`Failed to delete image from S3: ${key}`, err);
+      throw new Error("Failed to delete image from S3");
+    }
+  };
 
 
 export const uploadFileToS3 = async (file: Express.Multer.File, s3folderName: string): Promise<{ key: string; name: string; mime: string }> => {
@@ -116,3 +110,27 @@ export const uploadFileBufferToS3 = async (
     };
   };
   
+
+
+  // export const uploadImageToS3 = async (
+//   file: Express.Multer.File
+// ): Promise<{ key: string; name: string; mime: string }> => {
+//   const fileExtension = file.originalname.split(".").pop();
+//   const fileName = `${uuidv4()}.${fileExtension}`;
+//   const key = `domain-icons/${fileName}`;
+
+//   const params = {
+//     Bucket: process.env.S3_BUCKET_NAME!,
+//     Key: key,
+//     Body: file.buffer,
+//     ContentType: file.mimetype,
+//   };
+
+//   await s3.upload(params).promise();
+
+//   return {
+//     key, // <-- Only store key
+//     name: file.originalname,
+//     mime: file.mimetype,
+//   };
+// };
