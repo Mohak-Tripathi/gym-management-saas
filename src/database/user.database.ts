@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import { hashPassword } from "../utils/hashPassword";
 import { sendPasswordSetupEmail } from "../utils/emailService";
 import crypto from "crypto";
-import { uploadImageToS3 } from '../utils/s3'; // Adjust the import path as needed
+import { deleteImageFromS3, uploadImageToS3 } from '../utils/s3'; // Adjust the import path as needed
 import { getPresignedImageUrl } from "../utils/getPresignedImageUrl";
 
 
@@ -163,97 +163,46 @@ export class UserDatabase {
 
 
 
-// static async getAll(gymId: string, branchId: string) {
-//   try {
-//     if (!gymId || !branchId) {
-//       throw new AppError(
-//         "Gym ID and Branch ID are required",
-//         400,
-//         "USER_GYM_BRANCH_AND_GYM_ID_REQUIRED"
-//       );
-//     }
-
-//     const users = await prisma.user.findMany({
-//       where: {
-//         gymId,
-//         gymBranchId: branchId,
-//       },
-//     });
-
-//     const processedUsers = await Promise.all(
-//       users.map(async (user) => {
-//         let imageUrl = await getPresignedImageUrl(user?.imageUrl);
-
-//         return {
-//           ...user,
-//           imageUrl,
-//         };
-//       })
-//     );
-
-//     return processedUsers;
-//   } catch (error) {
-//     console.log(error, 'USER_DB_FETCH_ALL_ERROR');
-//     throw new AppError("Error fetching users", 500, "USER_DB_FETCH_ALL_ERROR");
-//   }
-// }
-
-
-
-
-
-  static async getAll(gymId: string, branchId: string) {
-    try {
-      if (!gymId || !branchId) {
-        throw new AppError(
-          "Gym ID and Branch ID are required",
-          400,
-          "COMMUNITY_POST_GYM_BRANCH_ID_REQUIRED"
-        );
-      }
-
-      const posts = await prisma.communityPost.findMany({
-        where: {
-          gymId,
-          gymBranchId: branchId,
-        },
-        include: {
-          images: true,
-          user: true, // optional: include postedBy info
-        },
-        orderBy: { createdAt: "desc" },
-      });
-
-      const processedPosts = await Promise.all(
-        posts.map(async (post) => {
-          const imagesWithUrls = await Promise.all(
-            post.images.map(async (img:any) => {
-              const presignedUrl = await getPresignedImageUrl(img.imageUrl);
-              return {
-                ...img,
-                imageUrl: presignedUrl,
-              };
-            })
-          );
-
-          return {
-            ...post,
-            images: imagesWithUrls,
-          };
-        })
-      );
-
-      return processedPosts;
-
-    } catch (error) {
-      console.log(error, "COMMUNITY_POST_DB_FETCH_ALL_ERROR");
+static async getAll(gymId: string, branchId: string) {
+  try {
+    if (!gymId || !branchId) {
       throw new AppError(
-        "Error fetching community posts",
-        500,
-        "COMMUNITY_POST_DB_FETCH_ALL_ERROR"
+        "Gym ID and Branch ID are required",
+        400,
+        "USER_GYM_BRANCH_AND_GYM_ID_REQUIRED"
       );
     }
+
+    const users = await prisma.user.findMany({
+      where: {
+        gymId,
+        gymBranchId: branchId,
+      },
+    });
+
+    const processedUsers = await Promise.all(
+      users.map(async (user) => {
+        let imageUrl = await getPresignedImageUrl(user?.imageUrl);
+
+        return {
+          ...user,
+          imageUrl,
+        };
+      })
+    );
+
+    return processedUsers;
+  } catch (error) {
+    console.log(error, 'USER_DB_FETCH_ALL_ERROR');
+    throw new AppError("Error fetching users", 500, "USER_DB_FETCH_ALL_ERROR");
   }
+}
+
+
+
+
+
+
 
 
 
@@ -425,17 +374,7 @@ static async getById(id: string, gymId: string, branchId: string) {
 
 
   static async changePasswordCurrentUser(data: any, userId: string) {
-    // try {
-    //   return await prisma.user.findUnique({
-    //     where: { email, gymId, gymBranchId: branchId },
-    //   });
-    // } catch (error) {
-    //   throw new AppError(
-    //     `Error fetching user with email: ${email}`,
-    //     500,
-    //     "USER_DB_FETCH_BY_EMAIL_ERROR"
-    //   );
-    // }
+
 
     const { currentPassword, newPassword } = data;
 
@@ -493,22 +432,79 @@ static async getById(id: string, gymId: string, branchId: string) {
     }
   }
 
-  static async update(id: string, data: any) {
+  // static async update(id: string, data: any) {
+  //   try {
+  //     if (!data.gymId || !data.gymBranchId) {
+  //       throw new AppError(
+  //         "Gym ID and Branch ID are required",
+  //         400,
+  //         "USER_GYM_BRANCH_AND_GYM_ID_REQUIRED"
+  //       );
+  //     }
+
+  //     return await prisma.user.update({
+  //       where: { id, gymId: data.gymId, gymBranchId: data.gymBranchId },
+  //       data,
+  //     });
+  //   } catch (error) {
+  //     console.log(error, "error")
+  //     throw new AppError(
+  //       `Error updating user with ID: ${id}`,
+  //       500,
+  //       "USER_DB_UPDATE_ERROR"
+  //     );
+  //   }
+  // }
+
+
+  static async update(
+    id: string,
+    data: any,
+    file?: Express.Multer.File
+  ) {
     try {
-      if (!data.gymId || !data.gymBranchId) {
+      const { gymId, gymBranchId } = data;
+  
+      if (!gymId || !gymBranchId) {
         throw new AppError(
           "Gym ID and Branch ID are required",
           400,
           "USER_GYM_BRANCH_AND_GYM_ID_REQUIRED"
         );
       }
-
+  
+      // Fetch existing user to delete old image if needed
+      const existingUser = await prisma.user.findFirst({
+        where: { id, gymId, gymBranchId },
+      });
+  
+      if (!existingUser) {
+        throw new AppError("User not found", 404, "USER_NOT_FOUND");
+      }
+  
+      // If new image is provided, delete old and upload new
+      if (file) {
+        if (existingUser.imageUrl) {
+          await deleteImageFromS3(existingUser.imageUrl); // key = imageUrl
+        }
+  
+        const { key, name: originalName, mime } = await uploadImageToS3(
+          file,
+          'user-profile-images'
+        );
+  
+        data.imageUrl = key;
+        data.imageName = originalName;
+        data.mimeType = mime;
+      }
+  
       return await prisma.user.update({
-        where: { id, gymId: data.gymId, gymBranchId: data.gymBranchId },
+        where: { id, gymId, gymBranchId },
         data,
       });
+  
     } catch (error) {
-      console.log(error, "error")
+      console.error("USER_DB_UPDATE_ERROR", error);
       throw new AppError(
         `Error updating user with ID: ${id}`,
         500,
@@ -517,24 +513,70 @@ static async getById(id: string, gymId: string, branchId: string) {
     }
   }
 
-  static async delete(id: string, gymId: string, branchId: string) {
-    try {
-      if (!gymId || !branchId) {
-        throw new AppError(
-          "Gym ID and Branch ID are required",
-          400,
-          "USER_GYM_BRANCH_AND_GYM_ID_REQUIRED"
-        );
-      }
-      return await prisma.user.delete({
-        where: { id, gymId, gymBranchId: branchId },
-      });
-    } catch (error) {
+  // static async delete(id: string, gymId: string, branchId: string) {
+  //   try {
+  //     if (!gymId || !branchId) {
+  //       throw new AppError(
+  //         "Gym ID and Branch ID are required",
+  //         400,
+  //         "USER_GYM_BRANCH_AND_GYM_ID_REQUIRED"
+  //       );
+  //     }
+  //     return await prisma.user.delete({
+  //       where: { id, gymId, gymBranchId: branchId },
+  //     });
+  //   } catch (error) {
+  //     throw new AppError(
+  //       `Error deleting user with ID: ${id}`,
+  //       500,
+  //       "USER_DB_DELETE_ERROR"
+  //     );
+  //   }
+  // }
+
+
+static async delete(id: string, gymId: string, branchId: string) {
+  try {
+    if (!gymId || !branchId) {
       throw new AppError(
-        `Error deleting user with ID: ${id}`,
-        500,
-        "USER_DB_DELETE_ERROR"
+        "Gym ID and Branch ID are required",
+        400,
+        "USER_GYM_BRANCH_AND_GYM_ID_REQUIRED"
       );
     }
+
+    // Step 1: Fetch user to get image key
+    const user = await prisma.user.findFirst({
+      where: { id, gymId, gymBranchId: branchId },
+    });
+
+    if (!user) {
+      throw new AppError("User not found", 404, "USER_NOT_FOUND");
+    }
+
+    // Step 2: Delete image from S3 if exists
+    if (user.imageUrl) {
+      try {
+        await deleteImageFromS3(user.imageUrl); // `imageUrl` stores the S3 key
+      } catch (s3Err) {
+        console.error(`Failed to delete image from S3 for user ${id}`, s3Err);
+        // Don't block DB delete just because S3 failed
+      }
+    }
+
+    // Step 3: Delete user from DB
+    return await prisma.user.delete({
+      where: { id, gymId, gymBranchId: branchId },
+    });
+
+  } catch (error) {
+    console.error(error, "USER_DB_DELETE_ERROR");
+    throw new AppError(
+      `Error deleting user with ID: ${id}`,
+      500,
+      "USER_DB_DELETE_ERROR"
+    );
   }
+}
+
 }

@@ -764,23 +764,22 @@ enum MaintenanceFrequency {
 
 
 
-
-
-model Feedback {
+model Complaint {
   id          String   @id @default(uuid())
+  subject     String
   message     String
 
-  // Optional link to User (who submitted)
   userId      String? 
   user        User?   @relation(fields: [userId], references: [id])
 
-  // Tenant scoping
   gymId       String
   gym         Gym     @relation(fields: [gymId], references: [id])
 
-  // Branch scoping (optional)
   gymBranchId String?
   gymBranch   GymBranch? @relation(fields: [gymBranchId], references: [id])
+
+  status      ComplaintStatus @default(PENDING)
+  response    String?         // Response or resolution message
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -789,6 +788,38 @@ model Feedback {
   @@index([gymBranchId])
   @@index([userId])
 }
+
+enum ComplaintStatus {
+  PENDING
+  RESOLVED
+}
+
+
+
+
+
+model Feedback {
+  id          String   @id @default(uuid())
+  message     String
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  gymId       String
+  gym         Gym      @relation(fields: [gymId], references: [id])
+
+  gymBranchId String?
+  gymBranch   GymBranch? @relation(fields: [gymBranchId], references: [id])
+
+  response    String?   // Optional response/acknowledgement
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([gymId])
+  @@index([gymBranchId])
+  @@index([userId])
+}
+
 
 
 enum InvoiceStatus {
