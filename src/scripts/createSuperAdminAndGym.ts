@@ -88,6 +88,7 @@ async function createSuperAdminAndGym() {
     let gym = await tx.gym.findUnique({
       where: { name: gymName },
     });
+    
     if (!gym) {
       gym = await tx.gym.create({
         data: {
