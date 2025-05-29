@@ -1,21 +1,84 @@
 // src/database/communityPost.database.ts
 import { PrismaClient } from "@prisma/client";
 import { AppError } from "../utils/AppError";
+import { uploadImageToS3 } from "../utils/s3";
 
 const prisma = new PrismaClient();
 
+// export class CommunityPostDatabase {
+  // static async create(data: any, files?: Express.Multer.File[]) {
+  //   try {
+  //     if (!data.gymId || !data.gymBranchId) {
+  //       throw new AppError(
+  //         "Gym ID and Branch ID are required",
+  //         400,
+  //         "MEMBERSHIP_DB_GYM_BRANCH_ID_REQUIRED"
+  //       );
+  //     }
+  //     return await prisma.communityPost.create({ data });
+  //   } catch (error) {
+  //     throw new AppError(
+  //       "Error creating community post",
+  //       500,
+  //       "COMMUNITY_POST_DB_CREATE_ERROR"
+  //     );
+  //   }
+  // }
+
+
 export class CommunityPostDatabase {
-  static async create(data: any) {
+  static async create(data: any, files?: Express.Multer.File[]) {
     try {
-      if (!data.gymId || !data.gymBranchId) {
+      const { gymId, gymBranchId, userId, title, content, category, isPinned = false } = data;
+
+      if (!gymId || !gymBranchId) {
         throw new AppError(
           "Gym ID and Branch ID are required",
           400,
-          "MEMBERSHIP_DB_GYM_BRANCH_ID_REQUIRED"
+          "COMMUNITY_POST_GYM_BRANCH_ID_REQUIRED"
         );
       }
-      return await prisma.communityPost.create({ data });
+
+      // Upload all images to S3
+      let imagesData: any[] = [];
+      if (files && files.length > 0) {
+        imagesData = await Promise.all(
+          files.map(async (file) => {
+            const { key, name, mime } = await uploadImageToS3(file, "muscletech-community-post-images");
+            return {
+              imageUrl: key,
+              imageName: name,
+              mimeType: mime,
+            };
+          })
+        );
+      }
+
+      // Create post with image relation
+      const post = await prisma.communityPost.create({
+        data: {
+          title,
+          content,
+          category,
+          isPinned,
+          gymId,
+          gymBranchId,
+          userId,
+          images: {
+            createMany: {
+              data: imagesData,
+            },
+          },
+        },
+        include: {
+          images: true, // return post with its images
+        },
+      });
+
+      return post;
+
     } catch (error) {
+      console.error(error, "COMMUNITY_POST_DB_CREATE_ERROR");
       throw new AppError(
         "Error creating community post",
         500,
@@ -23,6 +86,8 @@ export class CommunityPostDatabase {
       );
     }
   }
+
+
 
   static async getAll(gymId: string, branchId: string) {
     try {

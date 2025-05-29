@@ -7,6 +7,7 @@ import { handleErrorResponse } from "../utils/handleErrorResponse";
 export class CommunityPostController {
   static create: RequestHandler = async (req: Request, res: Response) => {
     const data = req.body;
+    const files = req.files as Express.Multer.File[];
     const { gymId } = req.user!; // Get both gymId and branchId from authenticated user
 
     if (!gymId) {
@@ -17,7 +18,7 @@ export class CommunityPostController {
       const post = await CommunityPostService.create({
         ...data,
         gymId
-      });
+      },  files)
       res.status(201).json(post);
     } catch (err) {
       handleErrorResponse(res, err);

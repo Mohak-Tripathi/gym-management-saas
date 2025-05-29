@@ -2,9 +2,9 @@ import { CommunityPostDatabase } from "../database/communityPost.database";
 import { AppError } from "../utils/AppError";
 
 export class CommunityPostService {
-  static async create(data: any) {
+  static async create(data: any,  files?: Express.Multer.File[]) {
     try {
-      return await CommunityPostDatabase.create(data);
+      return await CommunityPostDatabase.create(data, files);
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(
