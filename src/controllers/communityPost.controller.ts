@@ -83,6 +83,7 @@ export class CommunityPostController {
 
       const { id } = req.params;
       const data = req.body;
+      const files = req.files as Express.Multer.File[]; // if using `upload.array()`
 
       const gymBranchId = req.query.gymBranchId as string;
 
@@ -95,7 +96,8 @@ export class CommunityPostController {
       const post = await CommunityPostService.update(  id,
         data,
         gymId,
-        gymBranchId);
+        gymBranchId,  
+        files);
       res.json(post);
     } catch (err) {
       handleErrorResponse(res, err);

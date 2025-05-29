@@ -49,7 +49,7 @@ export class CommunityPostService {
     }
   }
 
-  static async update(id: string, data: any, gymId: string, branchId: string) {
+  static async update(id: string, data: any, gymId: string, branchId: string, files?: Express.Multer.File[]) {
     try {
       const post = await CommunityPostDatabase.getById(id, gymId, branchId);
       if (!post) {
@@ -59,7 +59,7 @@ export class CommunityPostService {
           "COMMUNITY_POST_NOT_FOUND"
         );
       }
-      return await CommunityPostDatabase.update(id, { ...data, gymId, gymBranchId: branchId });
+      return await CommunityPostDatabase.update(id, { ...data, gymId, gymBranchId: branchId }, files);
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(
