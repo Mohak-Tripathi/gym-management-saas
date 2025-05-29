@@ -2,17 +2,6 @@ import { UserDatabase } from '../database/user.database';
 import { AppError } from '../utils/AppError';
 
 class UserService {
-  // static async createUser(data: any) {
-  //   try {
-  //     return await UserDatabase.create(data);
-  //   } catch (error) {
-  //     if (error instanceof AppError) throw error;
-  //     throw new AppError('Error creating user', 500, 'USER_SERVICE_CREATE_ERROR');
-  //   }
-  // }
-
-
-
 
     static async createUser(data: any, file?: Express.Multer.File) {
       try {
@@ -82,14 +71,14 @@ class UserService {
     }
   }
 
-  static async updateUser(id: string, data: any, gymId: string, branchId: string) {
+  static async updateUser(id: string, data: any, gymId: string, branchId: string, file?: Express.Multer.File) {
     try {
       const user = await UserDatabase.getById(id, gymId, branchId);
       if (!user) {
         throw new AppError('User not found', 404, 'USER_NOT_FOUND');
       }
       
-      return await UserDatabase.update(id, { ...data, gymId, gymBranchId: branchId });
+      return await UserDatabase.update(id, { ...data, gymId, gymBranchId: branchId }, file);
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(`Error updating user with ID: ${id}`, 500, 'USER_SERVICE_UPDATE_ERROR');

@@ -104,6 +104,9 @@ export class CommunityPostDatabase {
   // }
 
 
+
+
+
   static async getAll(gymId: string, branchId: string) {
     try {
       if (!gymId || !branchId) {
@@ -190,6 +193,9 @@ export class CommunityPostDatabase {
   //     );
   //   }
   // }
+
+
+
 
 
 

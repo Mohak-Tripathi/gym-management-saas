@@ -28,7 +28,7 @@ router.get('/:id', authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  UserControll
 // Get user by email
 router.get('/email/:email', authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  UserController.getUserByEmail);
 // Update user
-router.put('/:id', authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  UserController.updateUser);
+router.put('/:id', authorize(UserRole.SUPERADMIN, UserRole.ADMIN), upload.single('image'),  UserController.updateUser);
 // Delete user
 router.delete('/:id',authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  UserController.deleteUser);
 

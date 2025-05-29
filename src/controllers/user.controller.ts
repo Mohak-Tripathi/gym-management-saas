@@ -144,6 +144,7 @@ class UserController {
 
       const { id } = req.params;
       const data = req.body;
+      const file = req.file;
 
       const gymBranchId = req.query.gymBranchId as string;
 
@@ -157,7 +158,8 @@ class UserController {
         id,
         data,
         gymId,
-        gymBranchId);
+        gymBranchId, 
+      file);
       res.status(200).json({
         status: "success",
         data: user,
