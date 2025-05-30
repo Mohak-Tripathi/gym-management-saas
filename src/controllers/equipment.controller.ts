@@ -85,6 +85,7 @@ export class EquipmentController {
     try {
       const { id } = req.params;
       const data = req.body;
+      const file = req.file;
 
       const gymBranchId = req.query.gymBranchId as string;
 
@@ -98,7 +99,8 @@ export class EquipmentController {
         id,
         data,
         gymId,
-        gymBranchId
+        gymBranchId,
+        file
       );
       res.json(equipment);
     } catch (err) {
