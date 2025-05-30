@@ -19,7 +19,7 @@ TraineeController.onboard);
 
 router.get("/",authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  TraineeController.getAll);
 router.get("/:id", authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  TraineeController.getById);
-router.put("/:id", authorize(UserRole.SUPERADMIN, UserRole.ADMIN),  TraineeController.update);
+router.put("/:id", authorize(UserRole.SUPERADMIN, UserRole.ADMIN), upload.single("image"),  TraineeController.update);
 router.delete("/:id", authorize(UserRole.SUPERADMIN, UserRole.ADMIN), TraineeController.delete);
 
 export default router;

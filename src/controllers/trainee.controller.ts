@@ -96,35 +96,90 @@ export class TraineeController {
     }
   }
 
+  // static async update(req: Request, res: Response) {
+  //   try {
+  //     const { id } = req.params;
+  //     const { gymId } = req.user!;
+  //     // If using query parameter approach
+  //     const gymBranchId = req.query.gymBranchId as string;
+
+  //     if (!gymId || !gymBranchId) {
+  //       throw new Error("Gym ID and Branch ID are required");
+  //     }
+
+  //     const { userData, traineeData, traineeMembershipData } = req.body;
+
+  //     const enrichedData = {
+  //       userData: userData ? { ...userData, gymId, gymBranchId } : undefined,
+  //       traineeData: traineeData
+  //         ? { ...traineeData, gymId, gymBranchId }
+  //         : undefined,
+  //       traineeMembershipData: traineeMembershipData
+  //         ? { ...traineeMembershipData, gymId, gymBranchId }
+  //         : undefined,
+  //     };
+
+  //     const trainee = await TraineeService.updateTrainee(
+  //       id,
+  //       enrichedData,
+  //       gymId,
+  //       gymBranchId
+  //     );
+  //     res.status(200).json({
+  //       status: "success",
+  //       data: trainee,
+  //     });
+  //   } catch (err) {
+  //     handleErrorResponse(res, err);
+  //   }
+  // }
+
+
   static async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
       const { gymId } = req.user!;
-      // If using query parameter approach
       const gymBranchId = req.query.gymBranchId as string;
-
+      const file = req.file;
+  
       if (!gymId || !gymBranchId) {
         throw new Error("Gym ID and Branch ID are required");
       }
-
-      const { userData, traineeData, traineeMembershipData } = req.body;
-
+  
+      let parsedUserData, parsedTraineeData, parsedTraineeMembershipData;
+  
+      if (req.body.userData) {
+        parsedUserData = JSON.parse(req.body.userData);
+      }
+  
+      if (req.body.traineeData) {
+        parsedTraineeData = JSON.parse(req.body.traineeData);
+      }
+  
+      if (req.body.traineeMembershipData) {
+        parsedTraineeMembershipData = JSON.parse(req.body.traineeMembershipData);
+      }
+  
       const enrichedData = {
-        userData: userData ? { ...userData, gymId, gymBranchId } : undefined,
-        traineeData: traineeData
-          ? { ...traineeData, gymId, gymBranchId }
+        userData: parsedUserData
+          ? { ...parsedUserData, gymId, gymBranchId }
           : undefined,
-        traineeMembershipData: traineeMembershipData
-          ? { ...traineeMembershipData, gymId, gymBranchId }
+        traineeData: parsedTraineeData
+          ? { ...parsedTraineeData, gymId, gymBranchId }
+          : undefined,
+        traineeMembershipData: parsedTraineeMembershipData
+          ? { ...parsedTraineeMembershipData, gymId, gymBranchId }
           : undefined,
       };
-
+  
       const trainee = await TraineeService.updateTrainee(
         id,
         enrichedData,
         gymId,
-        gymBranchId
+        gymBranchId,
+        file
       );
+  
       res.status(200).json({
         status: "success",
         data: trainee,
@@ -133,6 +188,7 @@ export class TraineeController {
       handleErrorResponse(res, err);
     }
   }
+  
 
   static async delete(req: Request, res: Response) {
     try {

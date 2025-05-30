@@ -86,6 +86,7 @@ model Gym {
   maintenanceSchedules MaintenanceSchedule[]
   maintenanceLogs     MaintenanceLog[]
   feedbacks     Feedback[]  
+  complaints  Complaint[]  // inverse relation
 
   passwordSetupTokens PasswordSetupToken[]
   staffBranches  StaffBranch[]
@@ -114,6 +115,7 @@ model GymBranch {
   users        User[]
   staffBranches  StaffBranch[]
   invoices  Invoice[]  // back relation to Invoice
+  complaints  Complaint[]  // inverse relation
 
   notifications Notification[]
   payments      Payment[]
@@ -148,6 +150,7 @@ model User {
   imageUrl   String?
   imageName  String?
   mimeType   String?
+  complaints  Complaint[]  // inverse relation
   
   // Tenant scoping (primary)
   gymId      String

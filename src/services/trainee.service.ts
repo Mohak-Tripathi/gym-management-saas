@@ -10,7 +10,7 @@ import crypto from "crypto";
 import { addMinutes } from "date-fns";
 import { sendPasswordSetupEmail } from "../utils/emailService";
 import { hashPassword } from "../utils/hashPassword";
-import { uploadImageToS3 } from "../utils/s3";
+import { deleteImageFromS3, uploadImageToS3 } from "../utils/s3";
 
 export class TraineeService {
   static async onboardTraineeWithMembership(data: any,  file?: Express.Multer.File) {
@@ -143,14 +143,16 @@ export class TraineeService {
     id: string,
     data: any,
     gymId: string,
-    gymBranchId: string
+    gymBranchId: string,
+    file?: Express.Multer.File
   ) {
     try {
       const trainee = await TraineeDatabase.updateTrainee(
         id,
         data,
         gymId,
-        gymBranchId
+        gymBranchId,
+        file
       );
       return trainee;
     } catch (error) {
@@ -180,24 +182,30 @@ export class TraineeService {
   //   }
   // }
 
+
   static async deleteTrainee(id: string, gymId: string, gymBranchId: string) {
     try {
-      // const trainee = await prisma.trainee.findUnique({ where: { id } });
+      // Step 1: Fetch trainee with related user to get image URL
       const trainee = await prisma.trainee.findUnique({
-        where: {
-          id
-        }
+        where: { id },
+        include: { user: true },
       });
-
+  
       if (!trainee) {
         throw new AppError("Trainee not found", 404, "TRAINEE_NOT_FOUND");
       }
-
+  
       // Step 2: Explicitly check tenant scoping
       if (trainee.gymId !== gymId || trainee.gymBranchId !== gymBranchId) {
         throw new AppError("Unauthorized access", 403, "UNAUTHORIZED_ACCESS");
       }
-
+  
+      // Step 3: Delete image from S3 if exists
+      if (trainee.user?.imageUrl) {
+        await deleteImageFromS3(trainee.user.imageUrl);
+      }
+  
+      // Step 4: Delete related records in a transaction
       await prisma.$transaction([
         prisma.traineeMembership.deleteMany({
           where: { traineeId: id },
@@ -209,16 +217,15 @@ export class TraineeService {
           where: { id: trainee.userId },
         }),
       ]);
-
+  
       return {
         message: "Trainee deleted successfully",
         traineeId: id,
         userId: trainee.userId,
       };
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
+  
       throw new AppError(
         `Error deleting trainee with ID: ${id}`,
         500,
@@ -227,6 +234,7 @@ export class TraineeService {
     }
   }
 }
+  
 
 //   static async createTrainee(data: any) {
 //     try {
