@@ -162,12 +162,20 @@ export class FeedbackDatabase {
   static async update(id: string, data: any) {
     try {
       // Only include userId and gymBranchId if they exist in the data
-      const updateData = {
-        message: data.message,
-        ...(data.userId && { userId: data.userId }),
-        ...(data.gymBranchId && { gymBranchId: data.gymBranchId })
-      };
+      // const updateData = {
+      //   message: data.message,
+      //   ...(data.userId && { userId: data.userId }),
+      //   ...(data.gymBranchId && { gymBranchId: data.gymBranchId })
+      // };
 
+
+      const updateData = {
+        ...(data.message && { message: data.message }),
+        ...(data.userId && { userId: data.userId }),
+        ...(data.gymBranchId && { gymBranchId: data.gymBranchId }),
+        ...(data.response && { response: data.response })
+      };
+      
       return await prisma.feedback.update({
         where: { id },
         data: updateData,

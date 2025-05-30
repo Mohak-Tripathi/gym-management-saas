@@ -48,13 +48,14 @@ prodrender:
 
 
 create-superadmin-ts:
-	@if [ "$(gymName)" = "" ] || [ "$(adminName)" = "" ] || [ "$(adminEmail)" = "" ] || [ "$(adminPassword)" = "" ]; then \
-		echo "❌ Please provide all the required details: gymName, adminName, adminEmail, adminPassword"; \
-		echo "Usage: make create-superadmin-ts gymName='Gym Name' adminName='Admin Name' adminEmail='admin@example.com' adminPassword='password'"; \
+	@if [ "$(gymName)" = "" ] || [ "$(adminName)" = "" ] || [ "$(adminEmail)" = "" ] || [ "$(adminPassword)" = "" ] || [ "$(phone)" = "" ]; then \
+		echo "❌ Please provide all the required details: gymName, adminName, adminEmail, adminPassword, phone"; \
+		echo "Usage: make create-superadmin-ts gymName='Gym Name' adminName='Admin Name' adminEmail='admin@example.com' adminPassword='password' phone='9999999999'"; \
 		exit 1; \
 	else \
 		echo "🚀 Creating SuperAdmin and Gym with name: $(gymName), admin: $(adminName)"; \
-		docker-compose exec backend sh -c "npx ts-node src/scripts/createSuperAdminAndGym.ts '$(gymName)' '$(adminName)' '$(adminEmail)' '$(adminPassword)'"; \
+		docker-compose exec backend sh -c "npx ts-node src/scripts/createSuperAdminAndGym.ts '$(gymName)' '$(adminName)' '$(adminEmail)' '$(adminPassword)' '$(phone)'"; \
 	fi
+
 
 # Example ==>>>> make create-superadmin-ts gymName="Golds Gym" adminName="Mohak Tripathi" adminEmail="mohaktripathi@mygoldsgym.com" adminPassword="supersecurepassword"

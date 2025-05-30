@@ -14,6 +14,7 @@ import crmLeads from "./routes/crmLead.route";
 import equipmentsRoute from "./routes/equipment.routes"
 import maintenanceSchedule from "./routes/maintenanceSchedule.routes"
 import feedbackRoutes from "./routes/feedback.route"
+import complaintRotes from "./routes/complaint.route"
 
 
 dotenv.config();
@@ -85,6 +86,7 @@ app.use("/api/crm-lead", crmLeads)
 app.use("/api/gym-equipments", equipmentsRoute)
 app.use("/api/maintenance-schedule",maintenanceSchedule)
 app.use("/api/feedback", feedbackRoutes)
+app.use("/api/complaint", complaintRotes)
 
 // Start the server
 // app.listen(PORT, () => {

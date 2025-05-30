@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 export class ComplaintDatabase {
   static async create(data: any) {
     try {
-      if (!data.gymId) {
+      if (!data.gymId || !data.message || !data.gymBranchId) {
         throw new AppError(
           "Gym ID is required",
           400,
@@ -15,15 +15,15 @@ export class ComplaintDatabase {
       }
       
       // Only include userId if it exists in the data
-      const createData = {
-        message: data.message,
-        gymId: data.gymId,
-        ...(data.userId && { userId: data.userId }),
-        ...(data.gymBranchId && { gymBranchId: data.gymBranchId })
-      };
+      // const createData = {
+      //   message: data.message,
+      //   gymId: data.gymId,
+      //   ...(data.userId && { userId: data.userId }),
+      //   ...(data.gymBranchId && { gymBranchId: data.gymBranchId })
+      // };
       
       return await prisma.complaint.create({ 
-        data: createData,
+        data: data,
         include: {
           user: {
             select: {
@@ -162,10 +162,18 @@ export class ComplaintDatabase {
   static async update(id: string, data: any) {
     try {
       // Only include userId and gymBranchId if they exist in the data
+      // const updateData = {
+      //   message: data.message,
+      //   ...(data.userId && { userId: data.userId }),
+      //   ...(data.gymBranchId && { gymBranchId: data.gymBranchId })
+      // };
       const updateData = {
-        message: data.message,
+        ...(data.subject && { subject: data.subject }),
+        ...(data.message && { message: data.message }),
         ...(data.userId && { userId: data.userId }),
-        ...(data.gymBranchId && { gymBranchId: data.gymBranchId })
+        ...(data.gymBranchId && { gymBranchId: data.gymBranchId }),
+        ...(data.status && { status: data.status }),
+        ...(data.response && { response: data.response })
       };
 
       return await prisma.complaint.update({
