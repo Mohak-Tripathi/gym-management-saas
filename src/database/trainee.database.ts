@@ -3,6 +3,7 @@ import { AppError } from "../utils/AppError";
 
 const prisma = new PrismaClient();
 import { getPresignedImageUrl } from "../utils/getPresignedImageUrl";
+import { deleteImageFromS3, uploadImageToS3 } from "../utils/s3";
 
 
 
@@ -208,9 +209,6 @@ export class TraineeDatabase {
   //   }
   // }
 
-
-
-
   static async updateTrainee(
     id: string,
     data: any,
@@ -223,9 +221,7 @@ export class TraineeDatabase {
     try {
       return await prisma.$transaction(async (tx) => {
         const existingTrainee = await tx.trainee.findFirst({
-          where: {
-            id,
-          },
+          where: { id },
           include: {
             user: true,
             traineeMemberships: true,
@@ -233,25 +229,36 @@ export class TraineeDatabase {
         });
   
         if (!existingTrainee) {
-          throw new AppError(
-            "Trainee not found",
-            404,
-            "TRAINEE_NOT_FOUND"
-          );
+          throw new AppError("Trainee not found", 404, "TRAINEE_NOT_FOUND");
         }
   
         if (
           existingTrainee.gymId !== gymId ||
           existingTrainee.gymBranchId !== gymBranchId
         ) {
-          throw new AppError(
-            "Unauthorized access",
-            403,
-            "UNAUTHORIZED_ACCESS"
-          );
+          throw new AppError("Unauthorized access", 403, "UNAUTHORIZED_ACCESS");
         }
   
-        // 1. Update User
+        // 1. Handle image update if file is provided
+        if (file && userData) {
+          const existingUser = existingTrainee.user;
+  
+          // Delete old image if exists
+          if (existingUser.imageUrl) {
+            await deleteImageFromS3(existingUser.imageUrl);
+          }
+  
+          const { key, name: originalName, mime } = await uploadImageToS3(
+            file,
+            "user-profile-images"
+          );
+  
+          userData.imageUrl = key;
+          userData.imageName = originalName;
+          userData.mimeType = mime;
+        }
+  
+        // 2. Update User
         if (userData) {
           await tx.user.update({
             where: { id: existingTrainee.userId },
@@ -259,7 +266,7 @@ export class TraineeDatabase {
           });
         }
   
-        // 2. Update Trainee
+        // 3. Update Trainee
         if (traineeData) {
           await tx.trainee.update({
             where: { id },
@@ -267,19 +274,15 @@ export class TraineeDatabase {
           });
         }
   
-        // 3. Update TraineeMembership (optional)
+        // 4. Update Trainee Membership (optional)
         if (traineeMembershipData) {
-          // You can either updateMany or delete & recreate, depending on structure
-          // Here's an example assuming one-to-one membership
           await tx.traineeMembership.updateMany({
-            where: {
-              traineeId: id,
-            },
+            where: { traineeId: id },
             data: traineeMembershipData,
           });
         }
   
-        // 4. Return full updated data
+        // 5. Return updated full object
         const updatedTrainee = await tx.trainee.findUnique({
           where: { id },
           include: {
@@ -291,9 +294,7 @@ export class TraineeDatabase {
         return updatedTrainee;
       });
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
   
       throw new AppError(
         `Error updating trainee with ID: ${id}`,
@@ -302,6 +303,100 @@ export class TraineeDatabase {
       );
     }
   }
+  
+
+
+  // static async updateTrainee(
+  //   id: string,
+  //   data: any,
+  //   gymId: string,
+  //   gymBranchId: string,
+  //   file?: Express.Multer.File
+  // ) {
+  //   const { userData, traineeData, traineeMembershipData } = data;
+  
+  //   try {
+  //     return await prisma.$transaction(async (tx) => {
+  //       const existingTrainee = await tx.trainee.findFirst({
+  //         where: {
+  //           id,
+  //         },
+  //         include: {
+  //           user: true,
+  //           traineeMemberships: true,
+  //         },
+  //       });
+  
+  //       if (!existingTrainee) {
+  //         throw new AppError(
+  //           "Trainee not found",
+  //           404,
+  //           "TRAINEE_NOT_FOUND"
+  //         );
+  //       }
+  
+  //       if (
+  //         existingTrainee.gymId !== gymId ||
+  //         existingTrainee.gymBranchId !== gymBranchId
+  //       ) {
+  //         throw new AppError(
+  //           "Unauthorized access",
+  //           403,
+  //           "UNAUTHORIZED_ACCESS"
+  //         );
+  //       }
+  
+  //       // 1. Update User
+  //       if (userData) {
+  //         await tx.user.update({
+  //           where: { id: existingTrainee.userId },
+  //           data: userData,
+  //         });
+  //       }
+  
+  //       // 2. Update Trainee
+  //       if (traineeData) {
+  //         await tx.trainee.update({
+  //           where: { id },
+  //           data: traineeData,
+  //         });
+  //       }
+  
+  //       // 3. Update TraineeMembership (optional)
+  //       if (traineeMembershipData) {
+  //         // You can either updateMany or delete & recreate, depending on structure
+  //         // Here's an example assuming one-to-one membership
+  //         await tx.traineeMembership.updateMany({
+  //           where: {
+  //             traineeId: id,
+  //           },
+  //           data: traineeMembershipData,
+  //         });
+  //       }
+  
+  //       // 4. Return full updated data
+  //       const updatedTrainee = await tx.trainee.findUnique({
+  //         where: { id },
+  //         include: {
+  //           user: true,
+  //           traineeMemberships: true,
+  //         },
+  //       });
+  
+  //       return updatedTrainee;
+  //     });
+  //   } catch (error) {
+  //     if (error instanceof AppError) {
+  //       throw error;
+  //     }
+  
+  //     throw new AppError(
+  //       `Error updating trainee with ID: ${id}`,
+  //       500,
+  //       "TRAINEE_DB_UPDATE_ERROR"
+  //     );
+  //   }
+  // }
   
 
   // static async delete(id: string, gymId: string, gymBranchId: string) {
