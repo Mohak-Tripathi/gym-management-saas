@@ -10,7 +10,7 @@ router.use(authMiddleware);
 
 router.post('/generate', InvoiceController.generateInvoice); // Called after membership onboarding or retry
 
-router.get('/:invoiceId/download', InvoiceController.downloadInvoice); // Presigned URL delivery
+// router.get('/:invoiceId/download', InvoiceController.downloadInvoice); // Presigned URL delivery
 
 export default router;
 
