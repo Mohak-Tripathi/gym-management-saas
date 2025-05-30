@@ -51,7 +51,7 @@ export class  EquipmentService {
     }
   }
 
-  static async updateEquipment(id: string, data: any, gymId: string, branchId: string) {
+  static async updateEquipment(id: string, data: any, gymId: string, branchId: string, file?: Express.Multer.File   ) {
     try {
       const equipment = await EquipmentDatabase.getById(id, gymId, branchId);
       if (!equipment) {
@@ -61,7 +61,7 @@ export class  EquipmentService {
           "GYM_EQUIPMENT_NOT_FOUND"
         );
       }
-      return await EquipmentDatabase.update(id, { ...data, gymId, gymBranchId: branchId });
+      return await EquipmentDatabase.update(id, { ...data, gymId, gymBranchId: branchId }, file);
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(
