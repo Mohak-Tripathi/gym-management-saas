@@ -14,7 +14,7 @@ router.post('/', upload.single('image'), EquipmentController.create);
 // router.post('/', EquipmentController.create);
 router.get('/', EquipmentController.getAll);
 router.get('/:id', EquipmentController.getById);
-router.put('/:id', EquipmentController.update);
+router.put('/:id', upload.single('image'), EquipmentController.update);
 router.delete('/:id', EquipmentController.delete);
 
 export default router;
