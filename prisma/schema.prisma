@@ -68,7 +68,7 @@ enum TraineeStatus {
 
 model Gym {
   id              String       @id @default(uuid())
-  name            String
+  name            String    @unique
   branches        GymBranch[]
   // Tenant relations
   users           User[]
@@ -794,6 +794,7 @@ model Complaint {
 
 enum ComplaintStatus {
   PENDING
+  ACKNOWLEDGED
   RESOLVED
 }
 
