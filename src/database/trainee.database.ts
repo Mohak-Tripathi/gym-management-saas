@@ -215,7 +215,8 @@ export class TraineeDatabase {
     id: string,
     data: any,
     gymId: string,
-    gymBranchId: string
+    gymBranchId: string,
+    file?: Express.Multer.File
   ) {
     const { userData, traineeData, traineeMembershipData } = data;
   

@@ -124,33 +124,73 @@ export const TrainerController = {
   //   } catch (err) {
   //     handleErrorResponse(res, err);
   //   }
+
+  // },
+
+  // async update(req: Request, res: Response) {
+  //   try {
+  //     const { id } = req.params;
+  //     const { userData, trainerData } = req.body;
+  //     const { gymId } = req.user!;
+  //     const gymBranchId = req.query.gymBranchId as string;
+  //     const file = req.file;
+
+  //     if (!gymId || !gymBranchId) {
+  //       throw new Error("Gym ID and Branch ID are required");
+  //     }
+
+  //     const enrichedData = {
+  //       userData: userData ? { ...userData, gymId, gymBranchId } : undefined,
+  //       trainerData: trainerData
+  //         ? { ...trainerData, gymId, gymBranchId }
+  //         : undefined,
+  //     };
+
+  //     const trainer = await TrainerService.updateTrainer(
+  //       id,
+  //       enrichedData,
+  //       gymId,
+  //       gymBranchId,
+  //       file
+  //     );
+
+  //     res.status(200).json({
+  //       status: "success",
+  //       data: trainer,
+  //     });
+  //   } catch (err) {
+  //     handleErrorResponse(res, err);
+  //   }
   // },
 
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { userData, trainerData } = req.body;
       const { gymId } = req.user!;
       const gymBranchId = req.query.gymBranchId as string;
-
+      const file = req.file;
+  
       if (!gymId || !gymBranchId) {
         throw new Error("Gym ID and Branch ID are required");
       }
-
+  
+      // Parse JSON strings if they exist
+      const parsedUserData = req.body.userData ? JSON.parse(req.body.userData) : undefined;
+      const parsedTrainerData = req.body.trainerData ? JSON.parse(req.body.trainerData) : undefined;
+  
       const enrichedData = {
-        userData: userData ? { ...userData, gymId, gymBranchId } : undefined,
-        trainerData: trainerData
-          ? { ...trainerData, gymId, gymBranchId }
-          : undefined,
+        userData: parsedUserData ? { ...parsedUserData, gymId, gymBranchId } : undefined,
+        trainerData: parsedTrainerData ? { ...parsedTrainerData, gymId, gymBranchId } : undefined,
       };
-
+  
       const trainer = await TrainerService.updateTrainer(
         id,
         enrichedData,
         gymId,
-        gymBranchId
+        gymBranchId,
+        file
       );
-
+  
       res.status(200).json({
         status: "success",
         data: trainer,
@@ -159,6 +199,7 @@ export const TrainerController = {
       handleErrorResponse(res, err);
     }
   },
+  
 
   async delete(req: Request, res: Response) {
     try {

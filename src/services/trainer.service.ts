@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 import crypto from "crypto";
 import { addMinutes } from "date-fns";
 import { hashPassword } from "../utils/hashPassword";
-import { uploadImageToS3 } from "../utils/s3";
+import { deleteImageFromS3, uploadImageToS3 } from "../utils/s3";
 
 export class TrainerService {
   // static async createTrainer(data: any) {
@@ -42,17 +42,20 @@ export class TrainerService {
         );
       }
 
-                // Upload image if present
-    let imageData = {};
-    if (file) {
-      const { key, name: originalName, mime } = await uploadImageToS3(file, 'user-profile-images');
-      imageData = {
-        imageUrl: key,
-        imageName: originalName,
-        mimeType: mime,
-      };
-    }
-
+      // Upload image if present
+      let imageData = {};
+      if (file) {
+        const {
+          key,
+          name: originalName,
+          mime,
+        } = await uploadImageToS3(file, "user-profile-images");
+        imageData = {
+          imageUrl: key,
+          imageName: originalName,
+          mimeType: mime,
+        };
+      }
 
       console.log(data, "data23");
       // Generate a secure random password
@@ -146,10 +149,11 @@ export class TrainerService {
     id: string,
     data: any,
     gymId: string,
-    gymBranchId: string
+    gymBranchId: string,
+    file?: Express.Multer.File
   ) {
     try {
-      return await TrainerDB.update(id, data, gymId, gymBranchId);
+      return await TrainerDB.update(id, data, gymId, gymBranchId, file);
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -216,27 +220,72 @@ export class TrainerService {
   //   }
   // }
 
+  //   static async deleteTrainer(id: string, gymId: string, gymBranchId: string) {
+  //     try {
+
+  //       const trainer = await prisma.trainer.findUnique({ where: { id } });
+
+  //       if (!trainer) {
+  //         throw new AppError("Trainer not found", 404, "TRAINER_NOT_FOUND");
+  //       }
+  //       console.log(trainer,  gymId, gymBranchId, "trainerr")
+
+  //       // Step 2: Explicitly check tenant scoping
+  //       if (trainer.gymId !== gymId || trainer.gymBranchId !== gymBranchId) {
+  //         throw new AppError("Unauthorized access", 403, "UNAUTHORIZED_ACCESS");
+  //       }
+
+  //       // 2. Transactional delete
+  //       await prisma.$transaction([
+  //         prisma.trainer.delete({
+  //           where: { id },
+  //         }),
+  //         prisma.user.delete({
+  //           where: { id: trainer.userId },
+  //         }),
+  //       ]);
+
+  //       // 3. Return success data
+  //       return {
+  //         message: "Trainer deleted successfully",
+  //         trainerId: id,
+  //         userId: trainer.userId,
+  //       };
+  //     } catch (error) {
+  //       if (error instanceof AppError) throw error;
+
+  //       throw new AppError(
+  //         `Error deleting trainer with ID: ${id}`,
+  //         500,
+  //         "TRAINER_SERVICE_DELETE_ERROR"
+  //       );
+  //     }
+  //   }
+  // }
+
   static async deleteTrainer(id: string, gymId: string, gymBranchId: string) {
     try {
-      // 1. Fetch the trainer and associated user
-      // const trainer = await prisma.trainer.findFirst({
-      //   where: {
-      //     id,
-      //   },
-      // });
-      const trainer = await prisma.trainer.findUnique({ where: { id } });
+      // Step 1: Fetch trainer with user info
+      const trainer = await prisma.trainer.findUnique({
+        where: { id },
+        include: { user: true },
+      });
 
       if (!trainer) {
         throw new AppError("Trainer not found", 404, "TRAINER_NOT_FOUND");
       }
-      console.log(trainer,  gymId, gymBranchId, "trainerr")
 
-      // Step 2: Explicitly check tenant scoping
+      // Step 2: Explicit tenant scoping check
       if (trainer.gymId !== gymId || trainer.gymBranchId !== gymBranchId) {
         throw new AppError("Unauthorized access", 403, "UNAUTHORIZED_ACCESS");
       }
 
-      // 2. Transactional delete
+      // Step 3: Delete image from S3 (if exists)
+      if (trainer.user?.imageUrl) {
+        await deleteImageFromS3(trainer.user.imageUrl);
+      }
+
+      // Step 4: Transactionally delete trainer and user
       await prisma.$transaction([
         prisma.trainer.delete({
           where: { id },
@@ -246,7 +295,7 @@ export class TrainerService {
         }),
       ]);
 
-      // 3. Return success data
+      // Step 5: Return response
       return {
         message: "Trainer deleted successfully",
         trainerId: id,

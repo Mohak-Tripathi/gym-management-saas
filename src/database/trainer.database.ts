@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { AppError } from "../utils/AppError";
 import { getPresignedImageUrl } from "../utils/getPresignedImageUrl";
+import { deleteImageFromS3, uploadImageToS3 } from "../utils/s3";
 
 const prisma = new PrismaClient();
 
@@ -211,68 +212,244 @@ export class TrainerDB {
   //   }
   // }
 
+  // static async update(
+  //   id: string,
+  //   data: any,
+  //   gymId: string,
+  //   gymBranchId: string
+  // ) {
+  //   const { userData, trainerData } = data;
+
+  //   try {
+  //     console.log(userData, trainerData, gymId, gymBranchId, "helo");
+  //     return await prisma.$transaction(async (tx) => {
+  //       const existingTrainer = await tx.trainer.findFirst({
+  //         where: {
+  //           id,
+  //         },
+  //         include: {
+  //           user: true,
+  //         },
+  //       });
+
+  //       console.log(existingTrainer, "existing trainer");
+  //       if (!existingTrainer) {
+  //         throw new AppError(
+  //           "Trainer not found or unauthorized access",
+  //           404,
+  //           "TRAINER_NOT_FOUND"
+  //         );
+  //       }
+
+  //       // 1. Update User (only if userData exists)
+  //       if (userData) {
+  //         await tx.user.update({
+  //           where: { id: existingTrainer.userId },
+  //           data: userData,
+  //         });
+  //       }
+
+  //       // 2. Update Trainer
+  //       const updatedTrainer = await tx.trainer.update({
+  //         where: { id },
+  //         data: trainerData,
+  //         include: {
+  //           user: true,
+  //           certifications: true,
+  //           trainees: true,
+  //           workoutPlans: true,
+  //           trainerSalaries: true,
+  //         },
+  //       });
+
+  //       return updatedTrainer;
+  //     });
+  //   } catch (error) {
+  //     if (error instanceof AppError) throw error;
+
+  //     throw new AppError(
+  //       "Error updating trainer and user",
+  //       500,
+  //       "TRAINER_DB_UPDATE_ERROR"
+  //     );
+  //   }
+  // }
+
+  // static async update(
+  //   id: string,
+  //   data: any,
+  //   gymId: string,
+  //   gymBranchId: string,
+  //   file?: Express.Multer.File
+  // ) {
+  //   const { userData, trainerData } = data;
+  
+  //   try {
+  //     return await prisma.$transaction(async (tx) => {
+  //       const existingTrainer = await tx.trainer.findFirst({
+  //         where: {
+  //           id,
+  //         },
+  //         include: {
+  //           user: true,
+  //         },
+  //       });
+  
+  //       if (!existingTrainer) {
+  //         throw new AppError(
+  //           "Trainer not found or unauthorized access",
+  //           404,
+  //           "TRAINER_NOT_FOUND"
+  //         );
+  //       }
+  
+  //       // 1. Handle image update if file is provided
+  //       if (file && userData) {
+  //         const existingUser = existingTrainer.user;
+  
+  //         if (existingUser.imageUrl) {
+  //           await deleteImageFromS3(existingUser.imageUrl);
+  //         }
+  
+  //         const { key, name: originalName, mime } = await uploadImageToS3(
+  //           file,
+  //           "user-profile-images"
+  //         );
+  
+  //         userData.imageUrl = key;
+  //         userData.imageName = originalName;
+  //         userData.mimeType = mime;
+  //       }
+  
+  //       // 2. Update User (only if userData exists)
+  //       if (userData) {
+  //         await tx.user.update({
+  //           where: { id: existingTrainer.userId },
+  //           data: userData,
+  //         });
+  //       }
+  
+  //       // 3. Update Trainer
+  //       const updatedTrainer = await tx.trainer.update({
+  //         where: { id },
+  //         data: trainerData,
+  //         include: {
+  //           user: true,
+  //           certifications: true,
+  //           trainees: true,
+  //           workoutPlans: true,
+  //           trainerSalaries: true,
+  //         },
+  //       });
+  
+  //       return updatedTrainer;
+  //     });
+  //   } catch (error) {
+  //     if (error instanceof AppError) throw error;
+  
+  //     throw new AppError(
+  //       "Error updating trainer and user",
+  //       500,
+  //       "TRAINER_DB_UPDATE_ERROR"
+  //     );
+  //   }
+  // }
+
   static async update(
     id: string,
     data: any,
     gymId: string,
-    gymBranchId: string
+    gymBranchId: string,
+    file?: Express.Multer.File
   ) {
-    const { userData, trainerData } = data;
-
+    const { userData, traineeData, traineeMembershipData } = data;
+  
     try {
-      console.log(userData, trainerData, gymId, gymBranchId, "helo");
       return await prisma.$transaction(async (tx) => {
-        const existingTrainer = await tx.trainer.findFirst({
-          where: {
-            id,
-          },
+        const existingTrainee = await tx.trainee.findFirst({
+          where: { id },
           include: {
             user: true,
+            traineeMemberships: true,
           },
         });
-
-        console.log(existingTrainer, "existing trainer");
-        if (!existingTrainer) {
-          throw new AppError(
-            "Trainer not found or unauthorized access",
-            404,
-            "TRAINER_NOT_FOUND"
-          );
+  
+        if (!existingTrainee) {
+          throw new AppError("Trainee not found", 404, "TRAINEE_NOT_FOUND");
         }
-
-        // 1. Update User (only if userData exists)
+  
+        if (
+          existingTrainee.gymId !== gymId ||
+          existingTrainee.gymBranchId !== gymBranchId
+        ) {
+          throw new AppError("Unauthorized access", 403, "UNAUTHORIZED_ACCESS");
+        }
+  
+        // 1. Handle image update if file is provided
+        if (file && userData) {
+          const existingUser = existingTrainee.user;
+  
+          // Delete old image if exists
+          if (existingUser.imageUrl) {
+            await deleteImageFromS3(existingUser.imageUrl);
+          }
+  
+          const { key, name: originalName, mime } = await uploadImageToS3(
+            file,
+            "user-profile-images"
+          );
+  
+          userData.imageUrl = key;
+          userData.imageName = originalName;
+          userData.mimeType = mime;
+        }
+  
+        // 2. Update User
         if (userData) {
           await tx.user.update({
-            where: { id: existingTrainer.userId },
+            where: { id: existingTrainee.userId },
             data: userData,
           });
         }
-
-        // 2. Update Trainer
-        const updatedTrainer = await tx.trainer.update({
+  
+        // 3. Update Trainee
+        if (traineeData) {
+          await tx.trainee.update({
+            where: { id },
+            data: traineeData,
+          });
+        }
+  
+        // 4. Update Trainee Membership (optional)
+        if (traineeMembershipData) {
+          await tx.traineeMembership.updateMany({
+            where: { traineeId: id },
+            data: traineeMembershipData,
+          });
+        }
+  
+        // 5. Return updated full object
+        const updatedTrainee = await tx.trainee.findUnique({
           where: { id },
-          data: trainerData,
           include: {
             user: true,
-            certifications: true,
-            trainees: true,
-            workoutPlans: true,
-            trainerSalaries: true,
+            traineeMemberships: true,
           },
         });
-
-        return updatedTrainer;
+  
+        return updatedTrainee;
       });
     } catch (error) {
       if (error instanceof AppError) throw error;
-
+  
       throw new AppError(
-        "Error updating trainer and user",
+        `Error updating trainee with ID: ${id}`,
         500,
-        "TRAINER_DB_UPDATE_ERROR"
+        "TRAINEE_DB_UPDATE_ERROR"
       );
     }
   }
+  
 
   // static async delete(id: string, gymId: string, gymBranchId: string) {
   //   try {
