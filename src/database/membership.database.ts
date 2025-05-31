@@ -41,6 +41,9 @@ export class MembershipDatabase {
         where: { 
           gymId,
           gymBranchId:branchId
+        },
+        orderBy: {
+          createdAt: 'asc'  // Older first, newest last
         }
       });
     } catch (error) {

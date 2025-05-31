@@ -87,6 +87,9 @@ export class EquipmentDatabase {
                 },
               },
             },
+            orderBy: {
+              updatedAt: 'desc', // Most recently updated or created users appear first
+            }
           })
 
           const processedEquipments = await Promise.all(

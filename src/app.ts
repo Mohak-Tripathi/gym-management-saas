@@ -15,6 +15,7 @@ import equipmentsRoute from "./routes/equipment.routes"
 import maintenanceSchedule from "./routes/maintenanceSchedule.routes"
 import feedbackRoutes from "./routes/feedback.route"
 import complaintRotes from "./routes/complaint.route"
+import { globalRateLimiter } from './middlewares/rateLimiter';
 
 
 dotenv.config();
@@ -68,7 +69,7 @@ app.use(cors({
 
 
 app.use(express.json());
-
+app.use(globalRateLimiter); 
 
 
 // Example
