@@ -89,6 +89,9 @@ export class TraineeDatabase {
           trainer: true,
           user: true,
         },
+        orderBy: {
+          updatedAt: 'desc', // Most recently updated or created at top
+        },
       });
   
       const processedTrainees = await Promise.all(

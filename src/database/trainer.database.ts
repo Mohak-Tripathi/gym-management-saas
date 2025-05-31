@@ -59,6 +59,9 @@ export class TrainerDB {
           workoutPlans: true,
           trainerSalaries: true,
         },
+        orderBy: {
+          updatedAt: 'desc', // Most recently updated or created at top
+        },
       });
 
       // Add signed image URLs

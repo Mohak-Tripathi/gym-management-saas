@@ -178,6 +178,9 @@ static async getAll(gymId: string, branchId: string) {
         gymId,
         gymBranchId: branchId,
       },
+      orderBy: {
+        updatedAt: 'desc', // Most recently updated or created at top
+      },
     });
 
     const processedUsers = await Promise.all(
