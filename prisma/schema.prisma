@@ -90,6 +90,8 @@ model Gym {
 
   passwordSetupTokens PasswordSetupToken[]
   staffBranches  StaffBranch[]
+  attendances  Attendance[]   // 👈 Add this
+  smartDevices SmartDevice[]  // 👈 Also for SmartDevice relation
 
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
@@ -129,6 +131,8 @@ model GymBranch {
   maintenanceSchedules MaintenanceSchedule[]
   maintenanceLogs     MaintenanceLog[]
   feedbacks     Feedback[]  
+  attendances  Attendance[]   // 👈 Add this
+  smartDevices SmartDevice[]  // 👈 Also for SmartDevice relation
   
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -166,6 +170,7 @@ model User {
   notifications  Notification[]  
   staffBranches  StaffBranch[]  // 👈 back relation
   feedbacks     Feedback[]  
+  attendances Attendance[]  // 👈 Add this line
 
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
@@ -885,3 +890,67 @@ enum PaymentMode {
 //Comments or likes (for engagement)?
 //Scheduling (future post date)?
 //Push notification toggles when a post is made?
+
+
+
+
+//Attendance
+
+
+
+
+model Attendance {
+  id         String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  gymId      String
+  gym        Gym       @relation(fields: [gymId], references: [id])
+  gymBranchId String
+  gymBranch  GymBranch @relation(fields: [gymBranchId], references: [id])
+  timestamp  DateTime  @default(now())
+  method     AttendanceMethod
+  deviceId   String?
+  rawData    Json?
+  status     AttendanceStatus @default(SUCCESS)
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([gymBranchId])
+  @@index([method])
+}
+
+enum AttendanceMethod {
+  BIOMETRIC
+  QR_SCAN
+}
+
+enum AttendanceStatus {
+  SUCCESS
+  FAIL
+  DENIED
+}
+
+
+
+//Optional Smart Device Table (if managing multiple devices)
+
+model SmartDevice {
+  id         String   @id @default(uuid())
+  name       String
+  type       DeviceType
+  ipAddress  String
+  gymId      String
+  gym        Gym       @relation(fields: [gymId], references: [id])
+  gymBranchId String
+  gymBranch  GymBranch @relation(fields: [gymBranchId], references: [id])
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+}
+
+enum DeviceType {
+  BIOMETRIC
+  QR_SMART_LOCK
+}
+
+
+
