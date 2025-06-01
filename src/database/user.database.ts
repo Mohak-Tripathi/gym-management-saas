@@ -89,6 +89,33 @@ export class UserDatabase {
 
 
 
+  static async getUserWithMembership(userId: string) {
+    try {
+      return await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          trainee: {
+            include: {
+              traineeMemberships: {
+                where: {
+                  endDate: { gte: new Date() }
+                },
+                orderBy: {
+                   endDate: "desc"
+                },
+                take: 1
+              }
+            }
+          }
+        }
+      });
+    } catch (error) {
+      throw new AppError("Error fetching user", 500, "USER_DB_FETCH_ERROR");
+    }
+  }
+
+
+
 
 
     static async create(data: any, file?: Express.Multer.File) {

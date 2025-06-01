@@ -15,7 +15,9 @@ import equipmentsRoute from "./routes/equipment.routes"
 import maintenanceSchedule from "./routes/maintenanceSchedule.routes"
 import feedbackRoutes from "./routes/feedback.route"
 import complaintRotes from "./routes/complaint.route"
+import attendanceRoutes from "./routes/attendence.route"
 import { globalRateLimiter } from './middlewares/rateLimiter';
+import qrRoutes from "./routes/qr.routes"
 
 
 dotenv.config();
@@ -88,6 +90,9 @@ app.use("/api/gym-equipments", equipmentsRoute)
 app.use("/api/maintenance-schedule",maintenanceSchedule)
 app.use("/api/feedback", feedbackRoutes)
 app.use("/api/complaint", complaintRotes)
+// Mount route under `/api/attendance`
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/qr', qrRoutes);
 
 // Start the server
 // app.listen(PORT, () => {
