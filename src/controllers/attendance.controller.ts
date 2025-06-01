@@ -33,7 +33,13 @@ export class AttendanceController {
   static async punchViaQR(req: Request, res: Response) {
     try {
       const { token } = req.body;
+      console.log("token", token);
+      console.log("req.body", req.body);
+      console.log("req.user", req.user);
+      
+
       const decoded: any = verifyQRToken(token);
+      console.log("decoded", decoded);
       if (!decoded) {
         res.status(401).json({ message: "Invalid or expired QR token" });
         return
@@ -68,6 +74,10 @@ export class AttendanceController {
     try {
 
       const { userId, method, deviceId } = req.body;
+      console.log("req.body", req.body);
+      console.log("userId", userId);
+      console.log("method", method);
+      console.log("deviceId", deviceId);
 
       const result = await AttendanceService.punchAttendance({
         userId,
