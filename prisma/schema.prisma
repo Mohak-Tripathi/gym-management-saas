@@ -25,10 +25,9 @@ model Trainee {
   id               String     @id @default(uuid())
   referenceMobileNo    String?    // Emergency or referral contact
   gender           Gender
-  age              Int
   status           TraineeStatus @default(ACTIVE) // NEW ENUM: ACTIVE, INACTIVE
-  personalizedGoal     String[]    // e.g., "Fat Loss", "Muscle Gain", "Posture Correction"
-  healthIssues         String[]   // e.g., ["Back Pain", "Knee Injury"]
+  personalizedGoal     String[]?    // e.g., "Fat Loss", "Muscle Gain", "Posture Correction"
+  healthIssues         String?  
 
   payments         Payment[]
   workoutPlans     WorkoutPlan[]
@@ -155,6 +154,9 @@ model User {
   imageName  String?
   mimeType   String?
   complaints  Complaint[]  // inverse relation
+  aadharNumber    String?    // Added: Aadhar Number
+  bloodGroup      String?    // Added: Blood Group
+  clientRepresentative String? 
   
   // Tenant scoping (primary)
   gymId      String
@@ -288,7 +290,7 @@ model TraineeMembership {
   endDate             DateTime
 
   createdAt           DateTime   @default(now())
-   updatedAt    DateTime   @updatedAt
+  updatedAt    DateTime   @updatedAt
 
     // Tenant scoping (primary)
   gymId           String
@@ -329,29 +331,15 @@ enum PaymentStatus {
 
 model Payment {
   id             String     @id @default(uuid())
-  // Link to Trainee & Membership
-  trainee        Trainee    @relation(fields: [traineeId], references: [id])
-  traineeId      String
-
-  traineeMembership TraineeMembership @relation(fields: [traineeMembershipId], references: [id])
-  traineeMembershipId String
-
-  amountPaid     Decimal    // what was paid in this transaction
-  totalAmountDue Decimal    // total amount expected for this membership
 
   paymentDate    DateTime
-  nextPaymentDate DateTime?  // only for partial payments
-
   paymentMethod  PaymentMethod
   transactionId  String?
-  status         PaymentStatus
   invoiceId  String
-  invoice    Invoice   @relation(fields: [invoiceId], references: [id])
-
+  invoice    Invoice   @relation(fields: [invoiceId], references: [id])  
   // Tenant scoping
   gymId          String
   gym            Gym        @relation(fields: [gymId], references: [id])
-
   gymBranchId    String
   gymBranch      GymBranch  @relation(fields: [gymBranchId], references: [id])
 
@@ -361,7 +349,6 @@ model Payment {
   @@index([gymId])
   @@index([gymBranchId])
 }
-
 
 model WorkoutPlan {
   id          String   @id @default(uuid())
@@ -842,34 +829,37 @@ enum InvoiceStatus {
 
 model Invoice {
   id              String        @id @default(uuid())
-  traineeId       String
-  trainee         Trainee       @relation(fields: [traineeId], references: [id])
-
   membershipId    String
   membership      TraineeMembership @relation(fields: [membershipId], references: [id])
 
-  gymBranchId     String
-  gymBranch       GymBranch     @relation(fields: [gymBranchId], references: [id])
+  amountPaid      Float         @default(0)  // Amount paid in this invoice
+  dueAmount       Float         // Remaining amount
+  paymentMode     PaymentMode?  
+  taxType         String?       // Added: Tax Type
+  taxAmount       Float?        // Added: Tax Amount
 
-  receiptNumber   String        @unique // e.g., INV-2025-0001
-  membershipType  String        // Could be fetched from related model or manually noted
+
+    // Dates
   startDate       DateTime
   endDate         DateTime
+  nextPaymentDate DateTime?     // Added: For installment payments
 
-  amountPaid      Float         @default(0)  // Total amount paid so far
-  dueAmount       Float         // Total invoice amount
-  paymentMode     PaymentMode?  // Could be optional if multiple payments happen
+
+  status          InvoiceStatus @default(PENDING)
+  receiptNumber   String        @unique // e.g., INV-2025-0001
   amountInWords   String
   terms           String?
   pdfUrl          String
   currency        String        @default("INR")
-  status          InvoiceStatus @default(PENDING)
-
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  
 
   // New: Relations to payment
   payments        Payment[]
+  gymBranchId     String
+  gymBranch       GymBranch     @relation(fields: [gymBranchId], references: [id])
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   @@index([traineeId])
   @@index([status])

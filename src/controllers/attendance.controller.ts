@@ -50,6 +50,8 @@ export class AttendanceController {
       const deviceId = decoded.deviceId;
 
 
+      console.log("userId", userId);
+      console.log("deviceId", deviceId);
       // const payload = {
       //   deviceId: deviceId,
       //   timestamp: Date.now(),
