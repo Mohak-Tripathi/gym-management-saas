@@ -19,6 +19,7 @@ import attendanceRoutes from "./routes/attendence.route"
 import { globalRateLimiter } from './middlewares/rateLimiter';
 import qrRoutes from "./routes/qr.routes"
 import paymentRoutes from "./routes/payment.route"
+import invoiceRoutes from "./routes/invoice.routes"
 
 dotenv.config();
 
@@ -94,6 +95,7 @@ app.use("/api/complaint", complaintRotes)
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/qr', qrRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use("/api/invoice", invoiceRoutes)
 
 // Start the server
 // app.listen(PORT, () => {

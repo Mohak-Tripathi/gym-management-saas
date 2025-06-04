@@ -11,6 +11,4 @@ router.use(authMiddleware);
 
 router.post('/membership/:traineeMembershipId', PaymentController.create);
 
-
-
 export default router;
