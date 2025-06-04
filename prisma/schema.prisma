@@ -25,12 +25,11 @@ model Trainee {
   id               String     @id @default(uuid())
   referenceMobileNo    String?    // Emergency or referral contact
   gender           Gender
-  age              Int
   status           TraineeStatus @default(ACTIVE) // NEW ENUM: ACTIVE, INACTIVE
-  personalizedGoal     String[]    // e.g., "Fat Loss", "Muscle Gain", "Posture Correction"
-  healthIssues         String[]   // e.g., ["Back Pain", "Knee Injury"]
+  personalizedGoal     String[]   // e.g., "Fat Loss", "Muscle Gain", "Posture Correction"
+  healthIssues         String?  
 
-  payments         Payment[]
+  //payments         Payment[]
   workoutPlans     WorkoutPlan[]
   height         Float?     // Optional in case not provided initially
   weight         Float?
@@ -53,7 +52,7 @@ model Trainee {
   trainer          Trainer?   @relation(fields: [trainerId], references: [id])
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
-  invoices  Invoice[]  // back relation to Invoice
+  //invoices  Invoice[]  // back relation to Invoice
 
   @@index([gymId])
   @@index([gymBranchId])
@@ -92,6 +91,7 @@ model Gym {
   staffBranches  StaffBranch[]
   attendances  Attendance[]   // 👈 Add this
   smartDevices SmartDevice[]  // 👈 Also for SmartDevice relation
+  invoices  Invoice[] 
 
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
@@ -155,6 +155,9 @@ model User {
   imageName  String?
   mimeType   String?
   complaints  Complaint[]  // inverse relation
+  aadharNumber    String?    // Added: Aadhar Number
+  bloodGroup      String?    // Added: Blood Group
+  clientRepresentative String? 
   
   // Tenant scoping (primary)
   gymId      String
@@ -243,10 +246,8 @@ model Certification {
   documentUrl String   // Link to uploaded proof/document (PDF/image)
   trainer     Trainer  @relation(fields: [trainerId], references: [id])
   trainerId   String
-
  
 }
-
 
 
 model Membership {
@@ -280,7 +281,6 @@ model TraineeMembership {
   discountedPrice     Decimal    // What the customer actually paid
   discountPercentage  Int?
   reasonOfDiscount    String?
-  payments  Payment[]
   invoices  Invoice[]  // back relation to Invoice
 
   extraMonths         Int?       // Extra duration due to offer
@@ -288,7 +288,7 @@ model TraineeMembership {
   endDate             DateTime
 
   createdAt           DateTime   @default(now())
-   updatedAt    DateTime   @updatedAt
+  updatedAt    DateTime   @updatedAt
 
     // Tenant scoping (primary)
   gymId           String
@@ -329,29 +329,14 @@ enum PaymentStatus {
 
 model Payment {
   id             String     @id @default(uuid())
-  // Link to Trainee & Membership
-  trainee        Trainee    @relation(fields: [traineeId], references: [id])
-  traineeId      String
-
-  traineeMembership TraineeMembership @relation(fields: [traineeMembershipId], references: [id])
-  traineeMembershipId String
-
-  amountPaid     Decimal    // what was paid in this transaction
-  totalAmountDue Decimal    // total amount expected for this membership
-
   paymentDate    DateTime
-  nextPaymentDate DateTime?  // only for partial payments
-
-  paymentMethod  PaymentMethod
+  paymentMethod  PaymentMode
   transactionId  String?
-  status         PaymentStatus
   invoiceId  String
-  invoice    Invoice   @relation(fields: [invoiceId], references: [id])
-
+  invoice    Invoice   @relation(fields: [invoiceId], references: [id])  
   // Tenant scoping
   gymId          String
   gym            Gym        @relation(fields: [gymId], references: [id])
-
   gymBranchId    String
   gymBranch      GymBranch  @relation(fields: [gymBranchId], references: [id])
 
@@ -361,7 +346,6 @@ model Payment {
   @@index([gymId])
   @@index([gymBranchId])
 }
-
 
 model WorkoutPlan {
   id          String   @id @default(uuid())
@@ -842,36 +826,34 @@ enum InvoiceStatus {
 
 model Invoice {
   id              String        @id @default(uuid())
-  traineeId       String
-  trainee         Trainee       @relation(fields: [traineeId], references: [id])
-
   membershipId    String
   membership      TraineeMembership @relation(fields: [membershipId], references: [id])
-
-  gymBranchId     String
-  gymBranch       GymBranch     @relation(fields: [gymBranchId], references: [id])
-
-  receiptNumber   String        @unique // e.g., INV-2025-0001
-  membershipType  String        // Could be fetched from related model or manually noted
+  amountPaid      Float         @default(0)  // Amount paid in this invoice
+  dueAmount       Float         // Remaining amount
+  taxType         String?       // Added: Tax Type
+  taxAmount       Float?        // Added: Tax Amount
+    // Dates
   startDate       DateTime
   endDate         DateTime
+  nextPaymentDate DateTime?     // Added: For installment payments
 
-  amountPaid      Float         @default(0)  // Total amount paid so far
-  dueAmount       Float         // Total invoice amount
-  paymentMode     PaymentMode?  // Could be optional if multiple payments happen
+  status          InvoiceStatus @default(PENDING)
+  receiptNumber   String        @unique // e.g., INV-2025-0001
   amountInWords   String
   terms           String?
   pdfUrl          String
   currency        String        @default("INR")
-  status          InvoiceStatus @default(PENDING)
+  // New: Relations to payment
+  payments        Payment[]
+  gymBranchId     String
+  gymBranch       GymBranch     @relation(fields: [gymBranchId], references: [id])
+  gymId       String
+  gym         Gym      @relation(fields: [gymId], references: [id])
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  // New: Relations to payment
-  payments        Payment[]
-
-  @@index([traineeId])
+  @@index([membershipId])
   @@index([status])
 }
 

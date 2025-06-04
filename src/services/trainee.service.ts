@@ -88,7 +88,7 @@ export class TraineeService {
 
       // 📤 Email logic AFTER transaction
       console.log(result, "result");
-      await sendPasswordSetupEmail(result.user.email, result.plainPassword);
+      // await sendPasswordSetupEmail(result.user.email, result.plainPassword);
       return result;
     } catch (error) {
       console.error("Onboarding Error:", error);

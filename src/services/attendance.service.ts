@@ -12,31 +12,34 @@ interface PunchInput {
 
 export class AttendanceService {
   static async punchAttendance({ userId, method, deviceId }: PunchInput) {
+    console.log("userIdD ", userId);
+    console.log("methodD", method);
+    console.log("deviceIdD", deviceId);
     if (!userId || !method) {
       throw new AppError("Missing required fields", 400, "ATTENDANCE_VALIDATION_ERROR");
     }
 
     const user = await UserDatabase.getUserWithMembership(userId);
+    console.log("userMyD", user);
 
     if (!user) {
       throw new AppError("User not found", 404, "ATTENDANCE_USER_NOT_FOUND");
     }
 
-    // const status: AttendanceStatus = user.role === "TRAINEE" && (!user.trainee?.traineeMemberships?.length)
-    //   ? "BLOCKED"
-    //   : "SUCCESS";
+
     const status: AttendanceStatus = user.role === "TRAINEE" && (!user.trainee?.traineeMemberships?.length)
-    ? "DENIED" // instead of "BLOCKED"
+    ? "DENIED" 
     : "SUCCESS";
 
-    await AttendanceDatabase.createAttendance({
+    const attendance = await AttendanceDatabase.createAttendance({
       userId,
       gymId: user.gymId,
       gymBranchId: user.gymBranchId!,
       method,
-      deviceId,
       status,
     });
+
+    console.log("Myattendance", attendance);
 
     if (status === "SUCCESS") {
       await triggerSonoff(deviceId); // 🔓 open gate if success
