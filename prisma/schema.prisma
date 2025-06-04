@@ -26,10 +26,10 @@ model Trainee {
   referenceMobileNo    String?    // Emergency or referral contact
   gender           Gender
   status           TraineeStatus @default(ACTIVE) // NEW ENUM: ACTIVE, INACTIVE
-  personalizedGoal     String[]?    // e.g., "Fat Loss", "Muscle Gain", "Posture Correction"
+  personalizedGoal     String[]   // e.g., "Fat Loss", "Muscle Gain", "Posture Correction"
   healthIssues         String?  
 
-  payments         Payment[]
+  //payments         Payment[]
   workoutPlans     WorkoutPlan[]
   height         Float?     // Optional in case not provided initially
   weight         Float?
@@ -52,7 +52,7 @@ model Trainee {
   trainer          Trainer?   @relation(fields: [trainerId], references: [id])
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
-  invoices  Invoice[]  // back relation to Invoice
+  //invoices  Invoice[]  // back relation to Invoice
 
   @@index([gymId])
   @@index([gymBranchId])
@@ -245,10 +245,8 @@ model Certification {
   documentUrl String   // Link to uploaded proof/document (PDF/image)
   trainer     Trainer  @relation(fields: [trainerId], references: [id])
   trainerId   String
-
  
 }
-
 
 
 model Membership {
@@ -282,7 +280,6 @@ model TraineeMembership {
   discountedPrice     Decimal    // What the customer actually paid
   discountPercentage  Int?
   reasonOfDiscount    String?
-  payments  Payment[]
   invoices  Invoice[]  // back relation to Invoice
 
   extraMonths         Int?       // Extra duration due to offer
@@ -838,7 +835,6 @@ model Invoice {
   taxType         String?       // Added: Tax Type
   taxAmount       Float?        // Added: Tax Amount
 
-
     // Dates
   startDate       DateTime
   endDate         DateTime
@@ -852,7 +848,6 @@ model Invoice {
   pdfUrl          String
   currency        String        @default("INR")
   
-
   // New: Relations to payment
   payments        Payment[]
   gymBranchId     String
@@ -861,7 +856,7 @@ model Invoice {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  @@index([traineeId])
+  @@index([membershipId])
   @@index([status])
 }
 
