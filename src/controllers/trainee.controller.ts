@@ -195,7 +195,6 @@ export class TraineeController {
       const { id } = req.params;
       // If using query parameter approach
       const gymBranchId = req.query.gymBranchId as string;
-
       const { gymId } = req.user!;
 
       if (!gymId || !gymBranchId) {
@@ -211,4 +210,43 @@ export class TraineeController {
       handleErrorResponse(res, err);
     }
   }
+
+
+
+
+  static async updateTraineeProfile(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { gymId } = req.user!; // Assuming this comes from auth middleware
+
+      const gymBranchId = req.query.gymBranchId as string;
+      const profileData = {
+        targetMuscleGroups: req.body.targetMuscleGroups,
+        trainingExperience: req.body.trainingExperience,
+        activityLevel: req.body.activityLevel,
+        pushupCount: req.body.pushupCount,
+        motivationSource: req.body.motivationSource,
+        workoutFrequency: req.body.workoutFrequency,
+        workoutDuration: req.body.workoutDuration,
+        wantsNotifications: req.body.wantsNotifications,
+      };
+
+      const updatedTrainee = await TraineeService.updateTraineeProfile(
+        id,
+        profileData,
+        gymId,
+        gymBranchId
+      );
+
+      res.status(200).json({
+        status: 'success',
+        data: updatedTrainee
+      });
+    } catch (error) {
+      handleErrorResponse(res, error);
+    }
+  }
+
+
+
 }

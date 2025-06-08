@@ -167,6 +167,32 @@ export class TraineeService {
     }
   }
 
+  static async updateTraineeProfile(
+    id: string,
+    profileData: any,
+    gymId: string,
+    gymBranchId: string,
+  ) {
+    try {
+      const trainee = await TraineeDatabase.updateTraineeProfileDB(
+        id,
+        profileData,
+        gymId,
+        gymBranchId
+      );
+      return trainee;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(
+        `Error updating trainee with ID: ${id}`,
+        500,
+        "TRAINEE_SERVICE_UPDATE_ERROR"
+      );
+    }
+  }
+
   // static async deleteTrainee(id: string, gymId: string, gymBranchId: string) {
   //   try {
   //     await TraineeDatabase.delete(id, gymId, gymBranchId);

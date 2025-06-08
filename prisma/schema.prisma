@@ -18,7 +18,19 @@ datasource db {
 
 
 
+enum TrainingExperience {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
 
+enum ActivityLevel {
+  SEDENTARY
+  LIGHT_ACTIVE
+  MODERATELY_ACTIVE
+  VERY_ACTIVE
+  ATHLETE
+}
 
 
 model Trainee {
@@ -28,13 +40,24 @@ model Trainee {
   status           TraineeStatus @default(ACTIVE) // NEW ENUM: ACTIVE, INACTIVE
   personalizedGoal     String[]   // e.g., "Fat Loss", "Muscle Gain", "Posture Correction"
   healthIssues         String?  
-
   //payments         Payment[]
   workoutPlans     WorkoutPlan[]
   height         Float?     // Optional in case not provided initially
   weight         Float?
   bmi                Float?    
   bodyFatPercentage  Float?   
+
+
+    // New fields for onboarding
+  targetMuscleGroups    String[]  // Array of muscle groups to focus on
+  trainingExperience    TrainingExperience?
+  activityLevel         ActivityLevel?
+  pushupCount           Int?      // Number of pushups they can do
+  motivationSource      String?   // Source of motivation
+  workoutFrequency      Int?      // Times per week
+  workoutDuration       Int?      // Minutes per session
+  wantsNotifications    Boolean   @default(true)
+
 
   traineeMemberships TraineeMembership[] // One-to-many
   trainerId        String?
@@ -278,7 +301,7 @@ model TraineeMembership {
   membership          Membership @relation(fields: [membershipId], references: [id])
   membershipId        String
 
-  discountedPrice     Decimal    // What the customer actually paid
+  discountedPrice     Decimal?    // What the customer actually paid
   discountPercentage  Int?
   reasonOfDiscount    String?
   invoices  Invoice[]  // back relation to Invoice
