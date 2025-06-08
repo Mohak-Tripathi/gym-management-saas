@@ -212,6 +212,71 @@ export class TraineeDatabase {
   //   }
   // }
 
+
+
+  static async updateTraineeProfileDB(
+    id: string,
+    profileData: any,
+    gymId: string,
+    gymBranchId: string
+  ) {
+    try {
+      // First verify the trainee exists and belongs to the correct gym/branch
+      const existingTrainee = await prisma.trainee.findFirst({
+        where: {
+          id,
+          gymId,
+          gymBranchId,
+        },
+      });
+  
+      if (!existingTrainee) {
+        throw new AppError(
+          "Trainee not found or unauthorized access",
+          404,
+          "TRAINEE_NOT_FOUND"
+        );
+      }
+  
+      // Update the trainee with profile data
+      const updatedTrainee = await prisma.trainee.update({
+        where: { 
+          id ,
+            gymId,
+            gymBranchId
+          
+        },
+        data: {
+          targetMuscleGroups: profileData.targetMuscleGroups,
+          trainingExperience: profileData.trainingExperience,
+          activityLevel: profileData.activityLevel,
+          pushupCount: profileData.pushupCount,
+          motivationSource: profileData.motivationSource,
+          workoutFrequency: profileData.workoutFrequency,
+          workoutDuration: profileData.workoutDuration,
+          wantsNotifications: profileData.wantsNotifications,
+        },
+        include: {
+          user: true, // Include user data in response if needed
+        },
+      });
+  
+      return updatedTrainee;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(
+        "Error updating trainee profile",
+        500,
+        "TRAINEE_PROFILE_UPDATE_ERROR"
+      );
+    }
+  }
+
+
+
+
   static async updateTrainee(
     id: string,
     data: any,

@@ -4,6 +4,9 @@ import convertAmountToWords from "../utils/WordsToNum";
 const prisma = new PrismaClient();
 
 interface CreatePaymentData {
+  discountedPrice:number;
+  discountPercentage:number;
+  reasonOfDiscount:string;
   traineeMembershipId: string;
   amount: number;
   paymentMode: PaymentMode;
@@ -184,6 +187,9 @@ export class PaymentService {
   }
 
   async createMembershipPayment({
+    discountedPrice,  
+    discountPercentage, 
+    reasonOfDiscount,
     traineeMembershipId,
     amount,
     paymentMode,
@@ -223,18 +229,26 @@ export class PaymentService {
         throw new AppError("Trainee membership not found", 404, "NOT_FOUND");
       }
 
+          // 2. Update trainee membership with new discount values
+    await tx.traineeMembership.update({
+      where: { id: traineeMembershipId },
+      data: {
+        discountedPrice,
+        discountPercentage,
+        reasonOfDiscount,
+      },
+    });
+
       // Calculate total amount paid so far
       const totalAmountPaid = traineeMembership.invoices.reduce(
         (sum, invoice) => sum + Number(invoice.amountPaid),
         0
       );
 
-      // 2. Calculate due amount
-      // const discountedPrice = Number(traineeMembership.discountedPrice);
-      // const dueAmount = Math.max(discountedPrice - amount, 0);
 
-      const discountedPrice = Number(traineeMembership.discountedPrice);
-      const remainingAmount = discountedPrice - totalAmountPaid;
+
+      const discountPrice = Number(traineeMembership.discountedPrice);
+      const remainingAmount = discountPrice - totalAmountPaid;
       const dueAmount = Math.max(remainingAmount - amount, 0);
 
       // Calculate total amount paid including current payment
@@ -251,7 +265,7 @@ export class PaymentService {
           taxAmount,
           startDate: traineeMembership.startDate,
           endDate: traineeMembership.endDate,
-          status: totalAmountPaidIncludingCurrent >= discountedPrice ? "PAID" : "PARTIALLY_PAID",
+          status: totalAmountPaidIncludingCurrent >= discountPrice ? "PAID" : "PARTIALLY_PAID",
           receiptNumber: await this.generateReceiptNumber(tx),
           amountInWords: convertAmountToWords(amount),
           pdfUrl: "", // You can generate and update this after creation if needed

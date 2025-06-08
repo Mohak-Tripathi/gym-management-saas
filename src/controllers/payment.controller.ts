@@ -9,8 +9,12 @@ export class PaymentController {
 
   static async create(req: Request, res: Response) {
     try {
-      const { traineeMembershipId } = req.params;
+
+      const {    traineeMembershipId } = req.params;
       const { 
+        discountedPrice,  
+        discountPercentage, 
+        reasonOfDiscount,
         amount, 
         paymentMode, 
         transactionId,
@@ -49,6 +53,9 @@ export class PaymentController {
       const paymentService = new PaymentService();
       // Process payment and create invoice
       const result = await paymentService.createMembershipPayment({
+        discountedPrice,  
+        discountPercentage, 
+        reasonOfDiscount,
         traineeMembershipId,
         amount,
         paymentMode,
