@@ -115,6 +115,10 @@ model Gym {
   attendances  Attendance[]   // 👈 Add this
   smartDevices SmartDevice[]  // 👈 Also for SmartDevice relation
   invoices  Invoice[] 
+  products        Product[]
+  productCategories ProductCategory[]
+  carts           Cart[]
+  orders          Order[]
 
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
@@ -156,6 +160,10 @@ model GymBranch {
   feedbacks     Feedback[]  
   attendances  Attendance[]   // 👈 Add this
   smartDevices SmartDevice[]  // 👈 Also for SmartDevice relation
+  products        Product[]
+  productCategories ProductCategory[]
+  carts           Cart[]
+  orders          Order[]
   
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -181,6 +189,8 @@ model User {
   aadharNumber    String?    // Added: Aadhar Number
   bloodGroup      String?    // Added: Blood Group
   clientRepresentative String? 
+  cart            Cart?
+  orders          Order[]
   
   // Tenant scoping (primary)
   gymId      String
@@ -959,3 +969,177 @@ enum DeviceType {
 
 
 
+
+
+
+
+
+// Product Categories
+model ProductCategory {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  products    Product[]
+  
+  // Tenant scoping
+  gymId       String
+  gym         Gym       @relation(fields: [gymId], references: [id])
+  gymBranchId String
+  gymBranch   GymBranch @relation(fields: [gymBranchId], references: [id])
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([gymId])
+  @@index([gymBranchId])
+}
+
+// Products
+model Product {
+  id              String          @id @default(uuid())
+  name            String
+  description     String
+  price           Decimal
+  discountedPrice Decimal?
+  stockQuantity   Int
+  sku             String?         @unique  // Stock Keeping Unit
+  brand           String?
+  weight          Float?          // in grams/kilograms
+  isActive        Boolean         @default(true)
+  
+  // Relations
+  category        ProductCategory @relation(fields: [categoryId], references: [id])
+  categoryId      String
+  images          ProductImage[]
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
+  
+  // Tenant scoping
+  gymId           String
+  gym             Gym            @relation(fields: [gymId], references: [id])
+  gymBranchId     String
+  gymBranch       GymBranch      @relation(fields: [gymBranchId], references: [id])
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([gymId])
+  @@index([gymBranchId])
+  @@index([categoryId])
+}
+
+// Product Images
+model ProductImage {
+  id          String   @id @default(uuid())
+  imageUrl    String
+  imageName   String
+  mimeType    String
+  isPrimary   Boolean  @default(false)
+  
+  // Relations
+  product     Product  @relation(fields: [productId], references: [id])
+  productId   String
+  
+  createdAt   DateTime @default(now())
+
+  @@index([productId])
+}
+
+// Shopping Cart
+model Cart {
+  id          String     @id @default(uuid())
+  user        User       @relation(fields: [userId], references: [id])
+  userId      String     @unique  // One cart per user
+  items       CartItem[]
+  
+  // Tenant scoping
+  gymId       String
+  gym         Gym        @relation(fields: [gymId], references: [id])
+  gymBranchId String
+  gymBranch   GymBranch  @relation(fields: [gymBranchId], references: [id])
+  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([gymId])
+  @@index([gymBranchId])
+}
+
+// Cart Items
+model CartItem {
+  id          String   @id @default(uuid())
+  quantity    Int
+  price       Decimal  // Price at time of adding to cart
+  
+  // Relations
+  cart        Cart     @relation(fields: [cartId], references: [id])
+  cartId      String
+  product     Product  @relation(fields: [productId], references: [id])
+  productId   String
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([cartId])
+  @@index([productId])
+}
+
+// Orders
+model Order {
+  id              String      @id @default(uuid())
+  orderNumber     String      @unique  // e.g., ORD-2024-0001
+  status          OrderStatus @default(PENDING)
+  totalAmount     Decimal
+  shippingAddress String
+  paymentMethod   PaymentMode
+  paymentStatus   PaymentStatus @default(PENDING)
+  
+  // Relations
+  user            User        @relation(fields: [userId], references: [id])
+  userId          String
+  items           OrderItem[]
+  
+  // Tenant scoping
+  gymId           String
+  gym             Gym         @relation(fields: [gymId], references: [id])
+  gymBranchId     String
+  gymBranch       GymBranch   @relation(fields: [gymBranchId], references: [id])
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([gymId])
+  @@index([gymBranchId])
+  @@index([status])
+}
+
+// Order Items
+model OrderItem {
+  id          String   @id @default(uuid())
+  quantity    Int
+  price       Decimal  // Price at time of purchase
+  
+  // Relations
+  order       Order    @relation(fields: [orderId], references: [id])
+  orderId     String
+  product     Product  @relation(fields: [productId], references: [id])
+  productId   String
+  
+  createdAt   DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// Add to existing enums
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
