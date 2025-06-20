@@ -22,6 +22,8 @@ import paymentRoutes from "./routes/payment.route"
 import invoiceRoutes from "./routes/invoice.routes"
 import productCategoryRoutes from "./routes/productCategory.routes"
 import productRoutes from "./routes/product.routes"
+import cartRoutes from './routes/cart.routes';
+
 
 dotenv.config();
 
@@ -101,6 +103,7 @@ app.use("/api/invoice", invoiceRoutes)
 app.use("/api/product-categories", productCategoryRoutes)
 // Add this with other route registrations
 app.use("/api/products", productRoutes);
+app.use('/api/cart', cartRoutes);
 
 // Start the server
 // app.listen(PORT, () => {
