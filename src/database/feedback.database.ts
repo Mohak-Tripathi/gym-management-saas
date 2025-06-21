@@ -1,7 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+// import { PrismaClient } from "@prisma/client";
 import { AppError } from "../utils/AppError";
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
+import prisma from "../prisma"
 
 export class FeedbackDatabase {
   static async create(data: any) {

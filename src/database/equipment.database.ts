@@ -1,10 +1,11 @@
-import { PrismaClient } from "@prisma/client";
+// import { PrismaClient } from "@prisma/client";
 import { AppError } from "../utils/AppError";
 import { deleteImageFromS3, uploadImageToS3 } from "../utils/s3";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
+import prisma from "../prisma"
 
 
 const s3 = new S3Client({

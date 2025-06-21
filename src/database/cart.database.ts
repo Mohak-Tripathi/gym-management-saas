@@ -1,7 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+// import { PrismaClient } from '@prisma/client';
 import { AppError } from '../utils/AppError';
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
+import prisma from "../prisma"
 
 export class CartDatabase {
   // Get or create cart for user

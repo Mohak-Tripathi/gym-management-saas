@@ -1,10 +1,10 @@
 
-import { PrismaClient } from "@prisma/client";
+// import { PrismaClient } from "@prisma/client";
 import { AttendanceMethod, AttendanceStatus } from "@prisma/client";
 import { AppError } from "../utils/AppError";
 
-
-const prisma = new PrismaClient();
+import prisma from "../prisma"
+// const prisma = new PrismaClient();
 
 
 interface AttendanceData {

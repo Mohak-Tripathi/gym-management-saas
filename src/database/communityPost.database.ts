@@ -1,10 +1,11 @@
 // src/database/communityPost.database.ts
-import { PrismaClient } from "@prisma/client";
+// import { PrismaClient } from "@prisma/client";
+import prisma from "../prisma"
 import { AppError } from "../utils/AppError";
 import { deleteImageFromS3, uploadImageToS3 } from "../utils/s3";
 import { getPresignedImageUrl } from "../utils/getPresignedImageUrl";
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
 
 
