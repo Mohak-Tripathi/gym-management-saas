@@ -2,6 +2,10 @@
 
 Production-grade multi-tenant SaaS for gym chains. Manages members, trainers, billing, equipment, CRM leads, attendance, and an in-app product store — all scoped across tenants and branches.
 
+![LiftUP Login](./screenshots/login.png)
+
+---
+
 **Live Demo:** [gym-management-saas-frontend-lcle.vercel.app](https://gym-management-saas-frontend-lcle.vercel.app)  
 **Frontend:** [gym-management-saas-frontend](https://github.com/Mohak-Tripathi/gym-management-saas-frontend)
 
