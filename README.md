@@ -222,12 +222,15 @@ RESEND_API_KEY=
 
 ## Numbers
 
-- 500+ members across tenants · 99.5% uptime on AWS EC2
+- Ran a one-month pilot with a 2-branch gym chain, 800+ members
 - 30+ Prisma models · 20+ enums across 10 functional modules
 - Two-level tenant scoping: Gym + GymBranch
 - Multi-stage Docker build — production image ~60% smaller than single-stage
 
----
+**Status:** discontinued after the pilot on unit economics — the biometric
+attendance integration cost more per year than single-customer revenue,
+and follow-up conversations with other gym owners showed no broader market.
+Kept public as an engineering reference.
 
 Built by [Mohak Tripathi](https://linkedin.com/in/mohak-tripathi)
 
