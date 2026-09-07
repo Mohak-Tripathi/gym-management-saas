@@ -13,7 +13,7 @@ Production-grade multi-tenant SaaS for gym chains. Manages members, trainers, bi
 
 ## What it does
 
-LiftUP runs multiple gym chains on one platform. Each chain (tenant) can have multiple branches. Every record — members, trainers, memberships, invoices, equipment — is scoped at both the tenant level (`gymId`) and the branch level (`gymBranchId`). No cross-tenant or cross-branch data leakage.
+LiftUP is built to run multiple gym chains on one platform. Each chain (tenant) can have multiple branches. Every record — members, trainers, memberships, invoices, equipment — is scoped at both the tenant level (`gymId`) and the branch level (`gymBranchId`). No cross-tenant or cross-branch data leakage.
 
 **Module overview:**
 
