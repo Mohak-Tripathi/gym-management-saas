@@ -15,6 +15,9 @@ Production-grade multi-tenant SaaS for gym chains. Manages members, trainers, bi
 
 LiftUP is built to run multiple gym chains on one platform. Each chain (tenant) can have multiple branches. Every record — members, trainers, memberships, invoices, equipment — is scoped at both the tenant level (`gymId`) and the branch level (`gymBranchId`). No cross-tenant or cross-branch data leakage.
 
+## Status: 
+A one-month pilot with a single two-branch customer, discontinued on unit economics. Built to validate demand, not for production — no automated tests, and several known gaps documented inline.
+
 **Module overview:**
 
 | Module | What it covers |
@@ -84,9 +87,12 @@ Gym (tenant)
             Equipment, Attendance, CRMLead, Product...
 ```
 
+<!-- 
 Every model carries both `gymId` and `gymBranchId` as non-nullable foreign keys with database indexes. Auth middleware extracts both from the JWT payload and injects them into every query. A staff member assigned to Branch A cannot access Branch B data even within the same gym chain.
 
 The `StaffBranch` junction table handles multi-branch staff assignments — a trainer can work across branches without getting cross-branch data access.
+-->
+Every model representing tenant data carries gymId; most also carry gymBranchId. gymId is signed into the JWT at login and read from the token on every request, so a client cannot spoof it — tenant-level isolation holds. gymBranchId is supplied by the request (query or body), because an owner or super-admin is not tied to a single branch. Validating that value against the caller's permitted branches was designed — the StaffBranch junction table — but was not wired in before the project was discontinued, so branch-level isolation is not enforced in the shipped code.
 
 ---
 
@@ -127,17 +133,22 @@ Complaint / Feedback   — Resolution workflow with admin response
 
 ## Key Engineering Decisions
 
+
+
 **Two-level scoping over single-level**
 
-Single `gymId` scoping would give branch managers access to all branches within the chain. Adding `gymBranchId` as a mandatory second scope key — indexed and enforced at middleware — gives branch-level isolation without separate schemas or databases.
+Single gymId scoping would give branch managers access to every branch in the chain, so gymBranchId was added as a second scope key to get branch-level isolation without separate schemas or databases. In the shipped code the gym scope is enforced from the token on every query; the branch scope is supplied by the request and is not yet validated server-side — see the tenancy note above.
 
+<!--
+Single `gymId` scoping would give branch managers access to all branches within the chain. Adding `gymBranchId` as a mandatory second scope key — indexed and enforced at middleware — gives branch-level isolation without separate schemas or databases.
+-->
 **Multi-stage Docker build**
 
 Builder stage: installs all deps, compiles TypeScript, generates Prisma client. Production stage: starts clean, copies only `dist/` and prod deps. No TypeScript compiler or dev tooling in the production image.
 
 **S3 presigned URLs for all file uploads**
 
-Backend never receives binary data. Returns a short-lived presigned URL. Client uploads directly to S3. Applies to: member photos, trainer certifications, equipment images, community post images, invoice PDFs, maintenance photos.
+Uploads go through the API (multer memory storage) and are forwarded to S3. Short-lived presigned URLs are used for reads — member photos, certifications, equipment and community images, and invoice PDFs are served through presigned links rather than public objects.
 
 **PDF split across PDFKit and Puppeteer**
 
