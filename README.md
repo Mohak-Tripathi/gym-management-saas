@@ -1,6 +1,6 @@
 # LiftUP — Gym Management SaaS
 
-Production-grade multi-tenant SaaS for gym chains. Manages members, trainers, billing, equipment, CRM leads, attendance, and an in-app product store — all scoped across tenants and branches.
+Multi-tenant SaaS for gym chains. Manages members, trainers, billing, equipment, CRM leads, attendance, and an in-app product store — scoped across tenants and branches.
 
 ![LiftUP Login](./screenshots/login.png)
 
@@ -13,9 +13,10 @@ Production-grade multi-tenant SaaS for gym chains. Manages members, trainers, bi
 
 ## What it does
 
-LiftUP is built to run multiple gym chains on one platform. Each chain (tenant) can have multiple branches. Every record — members, trainers, memberships, invoices, equipment — is scoped at both the tenant level (`gymId`) and the branch level (`gymBranchId`). No cross-tenant or cross-branch data leakage.
+LiftUP is built to run multiple gym chains on one platform. Each chain (tenant) can have multiple branches. Every record — members, trainers, memberships, invoices, equipment — is scoped at the tenant level (`gymId`) and, where relevant, at the branch level (`gymBranchId`). Tenant scoping is enforced from the signed token on every query; branch scoping is supplied by the request and was not completed before the project ended (see below).
 
-### Status: 
+### Status
+
 A one-month pilot with a single two-branch customer, discontinued on unit economics. Built to validate demand, not for production — no automated tests, and several known gaps documented inline.
 
 **Module overview:**
@@ -29,7 +30,7 @@ A one-month pilot with a single two-branch customer, discontinued on unit econom
 | Equipment | Inventory, maintenance schedules, maintenance logs |
 | Community Feed | Posts, images, categories, pinned announcements |
 | Notifications | Role-targeted, entity-linked notification system |
-| Smart Devices | Biometric + QR smart lock device management |
+| Smart Devices | Device registry for biometric readers and QR locks — *schema only, not wired in* |
 | Product Store | Categories, products, cart, orders, order tracking |
 | Complaints & Feedback | Member-facing complaint resolution workflow |
 
@@ -45,9 +46,9 @@ graph TB
 
     subgraph API["Express 5 + Node.js 18 + TypeScript"]
         RL[Rate Limiter]
-        AUTH[JWT Auth<br/>+ Tenant + Branch Resolver]
+        AUTH[JWT Auth<br/>gymId from token]
         CTRL[Controllers / Services]
-        PDF[Invoice PDF Engine<br/>PDFKit + Puppeteer]
+        PDF[Invoice PDF Engine<br/>PDFKit]
         EMAIL[Email Service<br/>Resend + EJS Templates]
         S3SVC[S3 Service<br/>Presigned URL Generator]
     end
@@ -64,7 +65,7 @@ graph TB
 
     FE -->|HTTPS REST| RL
     RL --> AUTH
-    AUTH -->|gymId + gymBranchId scoped| CTRL
+    AUTH -->|gymId scoped per query| CTRL
     CTRL --> PG
     CTRL --> PDF
     CTRL --> EMAIL
@@ -78,7 +79,7 @@ graph TB
 
 ## Two-Level Tenant Scoping
 
-Most multi-tenant SaaS systems scope by one key. LiftUP scopes by two:
+Most multi-tenant SaaS systems scope by one key. LiftUP was designed to scope by two:
 
 ```
 Gym (tenant)
@@ -87,12 +88,7 @@ Gym (tenant)
             Equipment, Attendance, CRMLead, Product...
 ```
 
-<!-- 
-Every model carries both `gymId` and `gymBranchId` as non-nullable foreign keys with database indexes. Auth middleware extracts both from the JWT payload and injects them into every query. A staff member assigned to Branch A cannot access Branch B data even within the same gym chain.
-
-The `StaffBranch` junction table handles multi-branch staff assignments — a trainer can work across branches without getting cross-branch data access.
--->
-Every model representing tenant data carries gymId; most also carry gymBranchId. gymId is signed into the JWT at login and read from the token on every request, so a client cannot spoof it — tenant-level isolation holds. gymBranchId is supplied by the request (query or body), because an owner or super-admin is not tied to a single branch. Validating that value against the caller's permitted branches was designed — the StaffBranch junction table — but was not wired in before the project was discontinued, so branch-level isolation is not enforced in the shipped code.
+Every model representing tenant data carries `gymId`; most also carry `gymBranchId`. `gymId` is signed into the JWT at login and read from the token on every request, so a client cannot spoof it — tenant-level isolation holds. `gymBranchId` is supplied by the request (query or body), because an owner or super-admin is not tied to a single branch. Validating that value against the caller's permitted branches was designed — the `StaffBranch` junction table — but was not wired in before the project was discontinued, so branch-level isolation is not enforced in the shipped code.
 
 ---
 
@@ -121,8 +117,9 @@ MaintenanceLog         — Execution log with photo upload and performer trackin
 CommunityPost          — Feed: images, categories (ANNOUNCEMENT / EVENT / CHALLENGE etc),
                          pinned posts
 Notification           — Role-targeted, linked to any entity type
-Attendance             — QR_SCAN / BIOMETRIC check-in with device tracking
+Attendance             — QR_SCAN / BIOMETRIC check-in
 SmartDevice            — Device registry for biometric readers and QR smart locks
+                         (schema only — no code reads or writes it)
 Product / Category     — Product catalog: SKU, stock, discounts, images
 Cart / CartItem        — Per-user cart (one cart per user)
 Order / OrderItem      — Order lifecycle: PENDING → CONFIRMED → SHIPPED → DELIVERED
@@ -133,26 +130,21 @@ Complaint / Feedback   — Resolution workflow with admin response
 
 ## Key Engineering Decisions
 
-
-
 **Two-level scoping over single-level**
 
-Single gymId scoping would give branch managers access to every branch in the chain, so gymBranchId was added as a second scope key to get branch-level isolation without separate schemas or databases. In the shipped code the gym scope is enforced from the token on every query; the branch scope is supplied by the request and is not yet validated server-side — see the tenancy note above.
+Single `gymId` scoping would give branch managers access to every branch in the chain, so `gymBranchId` was added as a second scope key to get branch-level isolation without separate schemas or databases. In the shipped code the gym scope is enforced from the token on every query; the branch scope is supplied by the request and is not yet validated server-side — see the tenancy note above.
 
-<!--
-Single `gymId` scoping would give branch managers access to all branches within the chain. Adding `gymBranchId` as a mandatory second scope key — indexed and enforced at middleware — gives branch-level isolation without separate schemas or databases.
--->
 **Multi-stage Docker build**
 
 Builder stage: installs all deps, compiles TypeScript, generates Prisma client. Production stage: starts clean, copies only `dist/` and prod deps. No TypeScript compiler or dev tooling in the production image.
 
-**S3 presigned URLs for all file uploads**
+**File uploads through the API, presigned URLs for reads**
 
 Uploads go through the API (multer memory storage) and are forwarded to S3. Short-lived presigned URLs are used for reads — member photos, certifications, equipment and community images, and invoice PDFs are served through presigned links rather than public objects.
 
-**PDF split across PDFKit and Puppeteer**
+**PDF generation with PDFKit**
 
-PDFKit for structured invoice layouts — fast, no browser overhead. Puppeteer for HTML/CSS-based documents (membership cards, formatted reports). Generated PDFs upload to S3, URL stored in Invoice record.
+PDFKit for structured invoice layouts — fast, no browser overhead. Generated PDFs upload to S3, URL stored in the Invoice record. An HTML/CSS-based path via Puppeteer was considered for formatted documents but not implemented.
 
 **Invoice as first-class model**
 
@@ -173,7 +165,7 @@ Invoice carries: receipt number, `amountInWords` (via `number-to-words`), tax ty
 | ORM | Prisma 6 + PostgreSQL 15 |
 | Auth | JWT + bcrypt |
 | File Storage | AWS S3 + presigned URLs |
-| PDF | PDFKit + Puppeteer |
+| PDF | PDFKit |
 | Email | Resend + EJS templates |
 | Rate Limiting | express-rate-limit |
 | Containerization | Docker multi-stage (node:18-alpine) |
@@ -236,7 +228,7 @@ RESEND_API_KEY=
 - Ran a one-month pilot with a 2-branch gym chain, 800+ members
 - 30+ Prisma models · 20+ enums across 10 functional modules
 - Two-level tenant scoping: Gym + GymBranch
-- Multi-stage Docker build — production image ~60% smaller than single-stage
+- Multi-stage Docker build — the runtime image excludes the TypeScript compiler and dev dependencies
 
 **Status:** discontinued after the pilot on unit economics — the biometric
 attendance integration cost more per year than single-customer revenue,
@@ -244,4 +236,3 @@ and follow-up conversations with other gym owners showed no broader market.
 Kept public as an engineering reference.
 
 Built by [Mohak Tripathi](https://linkedin.com/in/mohak-tripathi)
-
