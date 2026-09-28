@@ -59,3 +59,19 @@ create-superadmin-ts:
 
 
 # Example ==>>>> make create-superadmin-ts gymName="Golds Gym" adminName="Mohak Tripathi" adminEmail="mohaktripathi@mygoldsgym.com" adminPassword="supersecurepassword"
+# Production commands
+prod:
+	docker-compose -f docker-compose.prod.yaml up
+
+prodbuild:
+	docker-compose -f docker-compose.prod.yaml up --build
+
+proddown:
+	docker-compose -f docker-compose.prod.yaml down
+
+prodlogs:
+	docker-compose -f docker-compose.prod.yaml logs -f backend
+
+# Production migration (if needed)
+prodmigrate:
+	docker-compose -f docker-compose.prod.yaml exec backend sh -c "npx prisma migrate deploy"
